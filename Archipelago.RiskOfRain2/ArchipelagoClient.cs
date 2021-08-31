@@ -139,6 +139,8 @@ namespace Archipelago.RiskOfRain2
             {
                 HandleReceivedItemQueueItem();
             }
+
+            orig(self);
         }
 
         private void UpdatePlayerList(List<NetworkPlayer> players)
