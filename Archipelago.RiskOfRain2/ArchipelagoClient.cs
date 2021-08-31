@@ -16,9 +16,7 @@ using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
 {
-    //TODO: future: implement UI for AP connection in lobby menu or somewhere appropriate
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
-    //TODO: auto reconnect
     public class ArchipelagoClient
     {
         private ArchipelagoSession session;
@@ -91,6 +89,12 @@ namespace Archipelago.RiskOfRain2
             {
                 return;
             }
+
+            // Clean up
+            On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
+            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
+            On.RoR2.RoR2Application.Update -= RoR2Application_Update;
+            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
 
             // Reconnect
             session = new ArchipelagoSession(lastServerUrl);
