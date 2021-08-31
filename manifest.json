@@ -1,0 +1,10 @@
+﻿{
+	"name": "Archipelago",
+	"version_number": "0.1.0",
+	"website_url": "htpps://archipelago.gg:48484",
+	"description": "Archipelago client implementation enabling Risk of Rain 2 based Archipelago runners.",
+	"dependencies": [
+		"bbepis-BepInExPack-5.4.9",
+		"RiskofThunder-HookGenPatcher-1.2.1"
+	]
+}
