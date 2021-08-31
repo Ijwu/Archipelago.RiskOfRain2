@@ -1,6 +1,6 @@
-# Archipelago.RiskOfRain2
+# Archipelago.RiskOfRain2 | ![Discord Shield](https://discordapp.com/api/guilds/731205301247803413/widget.png?style=shield)
 
-This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg.
+This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg or join our Discord.
 
 Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. Only the host needs the mod.
 
@@ -37,6 +37,10 @@ Using the example YAML above: the Risk of Rain 2 player will have 15 total items
 They will complete a location check every second item (item_pickup_step = 1).
 They will have 4 of the items which other players can grant them replaced with `Dio's Best Friend`. (total_revivals = 4).
 The player will also start with a `Dio's Best Friend`. (start_with_revive = true)
+
+## Connecting to an Archipelago Server
+
+I assume you already have a server running. Instructions on how to run a server are available on https://archipelago.gg.
 
 ## Changelog
 
