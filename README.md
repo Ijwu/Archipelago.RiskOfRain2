@@ -2,7 +2,7 @@
 
 This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg.
 
-Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer.
+Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. Only the host needs the mod.
 
 ## Gameplay 
 
