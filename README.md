@@ -9,6 +9,15 @@ Should be multiplayer compatible, but not rigorously tested. Be sure to scale up
 The Risk of Rain 2 players send checks by causing items to spawn in-game. That means opening chests or killing bosses, generally. 
 An item check is only sent out after a certain number of items are picked up. This count is configurable in the player's YAML.
 
+### Achieving Victory or Defeat
+
+Achieving victory is defined as beating Mithrix or being defeated during Commencement. Obliterating is NOT supported at this time. You are NOT expected to revisit the planet
+through the primordial teleporter but you MAY do so. However, remember that victory can only be achieved in Commencement, so you'll be locking yourself in for another 5 levels.
+
+Due to the nature of roguelike games, you can possibly die and lose your place completely. This is mitigated partly by the free grants of `Dio's Best Friend`
+but it is still possible to lose. If you do lose, you can reconnect to the Archipelago server and start a new run. The server will send you the items you have
+earned thus far, giving you a small boost to the start of your run.
+
 ## YAML Settings
 
 An example YAML would look like this:
@@ -51,6 +60,10 @@ Keep password blank if there is no password on the server.
 Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
 
 ## Changelog
+
+**0.1.1**
+
+* Fix victory condition sending for commencement.
 
 **0.1.0**
 

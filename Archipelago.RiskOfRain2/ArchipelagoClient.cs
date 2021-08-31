@@ -110,9 +110,8 @@ namespace Archipelago.RiskOfRain2
             // Are we in commencement?
             if (Stage.instance.sceneDef.baseSceneName == "moon2")
             {
-                var packet = new LocationChecksPacket();
-                var id = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup["Victory"];
-                packet.Locations = new List<int>() { id };
+                var packet = new StatusUpdatePacket();
+                packet.Status = ArchipelagoClientState.ClientGoal;
                 session.SendPacket(packet);
             }
             orig(self, gameEndingDef);
