@@ -42,6 +42,14 @@ The player will also start with a `Dio's Best Friend`. (start_with_revive = true
 
 I assume you already have a server running. Instructions on how to run a server are available on https://archipelago.gg.
 
+There will be a menu button on the right side of the screen. Click it in order to bring up the in lobby mod config. From here you can expand the Archipelago sections and fill in the relevant info.
+
+Keep password blank if there is no password on the server.
+
+![In Lobby UI Example](./docs/img/inlobbyui.png)
+
+Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
+
 ## Changelog
 
 **0.1.0**
