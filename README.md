@@ -61,6 +61,10 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## Changelog
 
+**0.1.2**
+
+* Add R2API as a dependency.
+
 **0.1.1**
 
 * Fix victory condition sending for commencement.
