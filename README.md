@@ -64,7 +64,13 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 **0.1.1**
 
 * Fix victory condition sending for commencement.
+* Remove splash+intro cutscene skip (was for debugging purposes).
 
 **0.1.0**
 
 * Initial version.
+
+## Known Issues
+
+* Reconnect logic is unhelpful and may not reconnect you in the event of a network hiccup. You can restart the run but you may not send item checks for a while since
+it will also restart the item counter. (Which determines when to send an item check.) Items will still disappear, though, so it's not a perfect situation.

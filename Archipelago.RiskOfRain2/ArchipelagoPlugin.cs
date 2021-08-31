@@ -35,8 +35,7 @@ namespace Archipelago.RiskOfRain2
             Log.Init(Logger);
 
             AP = new ArchipelagoClient();
-            On.RoR2.PreGameController.StartRun += PreGameController_StartRun;
-            SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+            Run.onRunStartGlobal += Run_onRunStartGlobal;
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
@@ -46,7 +45,7 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        private void PreGameController_StartRun(On.RoR2.PreGameController.orig_StartRun orig, PreGameController self)
+        private void Run_onRunStartGlobal(Run obj)
         {
             if (apEnabled)
             {
@@ -58,8 +57,6 @@ namespace Archipelago.RiskOfRain2
                 AP.ResetItemReceivedCount();
                 AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
             }
-
-            orig(self);
         }
 
         private void CreateInLobbyMenu()
@@ -75,14 +72,6 @@ namespace Archipelago.RiskOfRain2
                 new BooleanConfigField("Enable Archipelago?", () => apEnabled, (newValue) => apEnabled = newValue)
             });
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
-        }
-
-        private void SceneManager_activeSceneChanged(Scene from, Scene to)
-        {
-            if (to.name == "splash")
-            {
-                SceneManager.LoadScene("title");
-            }
         }
     }
 }
