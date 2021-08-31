@@ -82,7 +82,7 @@ namespace Archipelago.RiskOfRain2
 
             On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
             RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
-            ArchipelagoPlugin.OnUpdate += ArchipelagoPlugin_OnUpdate;
+            On.RoR2.RoR2Application.Update += RoR2Application_Update;
             On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
         }
 
@@ -124,13 +124,13 @@ namespace Archipelago.RiskOfRain2
 
             On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
             RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
-            ArchipelagoPlugin.OnUpdate -= ArchipelagoPlugin_OnUpdate;
+            On.RoR2.RoR2Application.Update -= RoR2Application_Update;
             On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
 
             session = null;
         }
 
-        private void ArchipelagoPlugin_OnUpdate(object sender, EventArgs e)
+        private void RoR2Application_Update(On.RoR2.RoR2Application.orig_Update orig, RoR2Application self)
         {
             if (IsInGame && itemReceivedQueue.Any())
             {

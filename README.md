@@ -2,12 +2,16 @@
 
 This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg.
 
+Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer.
+
 ## Gameplay 
 
 The Risk of Rain 2 players send checks by causing items to spawn in-game. That means opening chests or killing bosses, generally. 
 An item check is only sent out after a certain number of items are picked up. This count is configurable in the player's YAML.
 
 ## YAML Settings
+**Important Note:** Your name in the YAML (the `name` option) MUST match your profile name in the Risk of Rain 2 game (upper right of main menu), otherwise you will NOT be able to connect to the server.
+
 An example YAML would look like this:
 ```yaml
 description: Ijwu-ror2

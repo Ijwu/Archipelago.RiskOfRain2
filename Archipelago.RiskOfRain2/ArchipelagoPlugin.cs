@@ -17,12 +17,10 @@ namespace Archipelago.RiskOfRain2
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
     public class ArchipelagoPlugin : BaseUnityPlugin
     {
-        public static event EventHandler OnUpdate;
-
         public const string PluginGUID = "9EBA2DD6-D072-4CEE-AE77-448F69A6424B";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "0.1.0";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
@@ -80,53 +78,6 @@ namespace Archipelago.RiskOfRain2
             if (to.name == "splash")
             {
                 SceneManager.LoadScene("title");
-            }
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F2))
-            {
-                Log.LogInfo("You hit F2, yay.");
-                AP.Connect("ws://localhost:38281");
-            }
-            else if (Input.GetKeyDown(KeyCode.F3))
-            {
-                var teddyBear = PickupCatalog.FindPickupIndex(RoR2Content.Items.Bear.itemIndex);
-                var transform = LocalUserManager.GetFirstLocalUser().cachedBodyObject.transform;
-                PickupDropletController.CreatePickupDroplet(teddyBear, transform.position, transform.forward * 20);
-                PickupDropletController.CreatePickupDroplet(PickupCatalog.FindPickupIndex(RoR2Content.Items.JumpBoost.itemIndex), transform.position, transform.forward * 20);
-            }
-            else if (Input.GetKeyDown(KeyCode.F4))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.ExtraLife.itemIndex, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.BossDamageBonus, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.BoostDamage, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.CritGlasses, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.FlatHealth, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.ShinyPearl, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.Bear, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.SprintBonus, 10);
-
-            }
-            else if (Input.GetKeyDown(KeyCode.F5))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                player.cachedMaster.GiveMoney(500);
-            }
-            else if (Input.GetKeyDown(KeyCode.F6))
-            {
-                RoR2.Run.instance.AdvanceStage(RoR2.Run.instance.nextStageScene);
-            }
-            else if (Input.GetKeyDown(KeyCode.F8))
-            {
-                Log.LogInfo("------- Log Marker ---------");
-            }
-
-            if (OnUpdate != null)
-            {
-                OnUpdate.Invoke(null, new EventArgs());
             }
         }
     }
