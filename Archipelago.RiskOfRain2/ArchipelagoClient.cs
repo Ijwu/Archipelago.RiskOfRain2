@@ -52,14 +52,10 @@ namespace Archipelago.RiskOfRain2
         {
             connectPacket = new ConnectPacket();
 
-            var userProfileName = LocalUserManager.GetFirstLocalUser().userProfile.name;
-
             connectPacket.Game = "Risk of Rain 2";
-            connectPacket.Name = userProfileName;
             connectPacket.Uuid = Guid.NewGuid().ToString();
             connectPacket.Version = new Version(0, 1, 0);
             connectPacket.Tags = new List<string> { "AP" };
-            //connectPacket.Password = password;
         }
 
         public void ResetItemReceivedCount()
@@ -67,12 +63,15 @@ namespace Archipelago.RiskOfRain2
             pickedUpItemCount = 0;
         }
 
-        public void Connect(string url)
+        public void Connect(string url, string slotName, string password = null)
         {
             if (session != null && session.Connected)
             {
                 session.Disconnect();
             }
+
+            connectPacket.Name = slotName;
+            connectPacket.Password = password;
 
             lastServerUrl = url;
             session = new ArchipelagoSession(url);
@@ -100,7 +99,7 @@ namespace Archipelago.RiskOfRain2
             session.SocketClosed += Session_SocketClosed;
         }
 
-        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameResultType gameResultType)
+        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
             // TODO: prevent game over if more dio's can be incoming
 
@@ -112,7 +111,7 @@ namespace Archipelago.RiskOfRain2
                 packet.Locations = new List<int>() { id };
                 session.SendPacket(packet);
             }
-            orig(self, gameResultType);
+            orig(self, gameEndingDef);
         }
 
         private void Run_onRunDestroyGlobal(Run obj)

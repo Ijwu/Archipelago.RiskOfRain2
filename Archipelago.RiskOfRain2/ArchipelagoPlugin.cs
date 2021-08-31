@@ -27,6 +27,8 @@ namespace Archipelago.RiskOfRain2
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
         private bool apEnabled = false;
+        private string apSlotName;
+        private string apPassword;
 
         public void Awake()
         {
@@ -54,7 +56,7 @@ namespace Archipelago.RiskOfRain2
                 uri.Port = apServerPort;
 
                 AP.ResetItemReceivedCount();
-                AP.Connect(uri.Uri.AbsoluteUri);
+                AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
             }
 
             orig(self);
@@ -66,6 +68,8 @@ namespace Archipelago.RiskOfRain2
             configEntry.DisplayName = "Archipelago";
             configEntry.SectionFields.Add("Archipelago Client Config", new List<IConfigField>
             {
+                new StringConfigField("Archipelago Slot Name", () => apSlotName, (newValue) => apSlotName = newValue),
+                new StringConfigField("Archipelago Server Password", () => apPassword, (newValue) => apPassword = newValue),
                 new StringConfigField("Archipelago Server URL", () => apServerUri, (newValue) => apServerUri = newValue),
                 new IntConfigField("Archipelago Server Port", () => apServerPort, (newValue) => apServerPort = newValue),
                 new BooleanConfigField("Enable Archipelago?", () => apEnabled, (newValue) => apEnabled = newValue)
