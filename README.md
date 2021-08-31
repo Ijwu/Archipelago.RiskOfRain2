@@ -15,7 +15,7 @@ An item check is only sent out after a certain number of items are picked up. Th
 An example YAML would look like this:
 ```yaml
 description: Ijwu-ror2
-name: IjwuROR2
+name: Ijwu
 
 game:
   Risk of Rain 2: 1
