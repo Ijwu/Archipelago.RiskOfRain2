@@ -2,7 +2,7 @@
 
 This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg or join our Discord.
 
-Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. Only the host needs the mod.
+Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. At the moment, all players require the mod in multiplayer.
 
 ## Gameplay 
 
@@ -30,26 +30,32 @@ game:
 
 Risk of Rain 2:
   total_locations: 15
+  total_items: 30
   total_revivals: 4
   start_with_revive: true
   item_pickup_step: 1
+  enable_lunar: true
 ```
 
 | Name | Description | Allowed values |
 | ---- | ----------- | -------------- |
 | total_locations | The total number of location checks that will be attributed to the Risk of Rain player. | 10 - 50 |
+| total_items | The total number of items which are added to the multiworld on behalf of the Risk of Rain player. | 10-50 |
 | total_revivals | The total number of items in the Risk of Rain player's item pool (items other players pick up for them) replaced with `Dio's Best Friend`. | 0 - 5 |
 | start_with_revive | Starts the player off with a `Dio's Best Friend`. Functionally equivalent to putting a `Dio's Best Friend` in your `starting_inventory`. | true/false |
 | item_pickup_step | The number of item pickups which you are allowed to claim before they become an Archipelago location check. | 0 - 5 |
+| enable_lunar | Allows for lunar items to be shuffled into the item pool on behalf of the Risk of Rain player. | true/false |
 
-Using the example YAML above: the Risk of Rain 2 player will have 15 total items which they can pick up for other players (total_locations = 15). 
-They will complete a location check every second item (item_pickup_step = 1).
-They will have 4 of the items which other players can grant them replaced with `Dio's Best Friend`. (total_revivals = 4).
+Using the example YAML above: the Risk of Rain 2 player will have 15 total items which they can pick up for other players. (total_locations = 15)
+They will have 30 items which can be granted to them through the multiworld. (total_items = 30)
+They will complete a location check every second item. (item_pickup_step = 1)
+They will have 4 of the items which other players can grant them replaced with `Dio's Best Friend`. (total_revivals = 4)
 The player will also start with a `Dio's Best Friend`. (start_with_revive = true)
+The player will have lunar items shuffled into the item pool on their behalf. (enable_lunar = true)
 
 ## Connecting to an Archipelago Server
 
-I assume you already have a server running. Instructions on how to run a server are available on https://archipelago.gg.
+I assume you already have an Archipelago server running. Instructions on how to run a server are available on https://archipelago.gg.
 
 There will be a menu button on the right side of the screen. Click it in order to bring up the in lobby mod config. From here you can expand the Archipelago sections and fill in the relevant info.
 
@@ -60,6 +66,13 @@ Keep password blank if there is no password on the server.
 Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
 
 ## Changelog
+
+**0.1.3**
+
+* Set InLobbyConfig as hard dependency.
+* Update README to reflect that all players require the mod at the moment.
+* Add `total_items` YAML option to README.
+* Add `enable_lunar` YAML option to README.
 
 **0.1.2**
 

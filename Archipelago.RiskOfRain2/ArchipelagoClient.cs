@@ -96,6 +96,8 @@ namespace Archipelago.RiskOfRain2
             On.RoR2.RoR2Application.Update -= RoR2Application_Update;
             On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
 
+            //TODO: improve reconnect logic. immediate reconnect is nearly useless.
+
             // Reconnect
             session = new ArchipelagoSession(lastServerUrl);
             session.ConnectAsync();

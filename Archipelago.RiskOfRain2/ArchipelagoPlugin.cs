@@ -14,13 +14,13 @@ namespace Archipelago.RiskOfRain2
 {
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.HardDependency)]
     public class ArchipelagoPlugin : BaseUnityPlugin
     {
-        public const string PluginGUID = "9EBA2DD6-D072-4CEE-AE77-448F69A6424B";
+        public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "0.1.2";
+        public const string PluginVersion = "0.1.3";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
