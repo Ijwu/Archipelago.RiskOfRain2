@@ -20,14 +20,14 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "0.1.3";
+        public const string PluginVersion = "0.1.5";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
-        private bool apEnabled = false;
-        private string apSlotName;
+        private bool apEnabled = true;
+        private string apSlotName = "IJ";
         private string apPassword;
 
         public void Awake()
@@ -54,7 +54,7 @@ namespace Archipelago.RiskOfRain2
                 uri.Host = apServerUri;
                 uri.Port = apServerPort;
 
-                AP.ResetItemReceivedCount();
+                AP.ItemLogic.ResetPickedUpItemCount();
                 AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
             }
         }

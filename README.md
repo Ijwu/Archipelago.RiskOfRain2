@@ -30,7 +30,6 @@ game:
 
 Risk of Rain 2:
   total_locations: 15
-  total_items: 30
   total_revivals: 4
   start_with_revive: true
   item_pickup_step: 1
@@ -39,18 +38,22 @@ Risk of Rain 2:
 
 | Name | Description | Allowed values |
 | ---- | ----------- | -------------- |
-| total_locations | The total number of location checks that will be attributed to the Risk of Rain player. | 10 - 50 |
-| total_items | The total number of items which are added to the multiworld on behalf of the Risk of Rain player. | 10-50 |
+| total_locations | The total number of location checks that will be attributed to the Risk of Rain player. This option is ALSO the total number of items in the item pool for the Risk of Rain player. | 10 - 50 |
 | total_revivals | The total number of items in the Risk of Rain player's item pool (items other players pick up for them) replaced with `Dio's Best Friend`. | 0 - 5 |
 | start_with_revive | Starts the player off with a `Dio's Best Friend`. Functionally equivalent to putting a `Dio's Best Friend` in your `starting_inventory`. | true/false |
 | item_pickup_step | The number of item pickups which you are allowed to claim before they become an Archipelago location check. | 0 - 5 |
 | enable_lunar | Allows for lunar items to be shuffled into the item pool on behalf of the Risk of Rain player. | true/false |
 
 Using the example YAML above: the Risk of Rain 2 player will have 15 total items which they can pick up for other players. (total_locations = 15)
-They will have 30 items which can be granted to them through the multiworld. (total_items = 30)
+
+They will have 15 items waiting for them in the item pool which will be distributed out to the multiworld. (total_locations = 15)
+
 They will complete a location check every second item. (item_pickup_step = 1)
+
 They will have 4 of the items which other players can grant them replaced with `Dio's Best Friend`. (total_revivals = 4)
+
 The player will also start with a `Dio's Best Friend`. (start_with_revive = true)
+
 The player will have lunar items shuffled into the item pool on their behalf. (enable_lunar = true)
 
 ## Connecting to an Archipelago Server
@@ -66,6 +69,15 @@ Keep password blank if there is no password on the server.
 Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
 
 ## Changelog
+
+**0.1.5**
+
+* Remove `total_items` YAML option as it doesn't work as intended.
+* Other formatting tweaks to README.
+
+**0.1.4**
+
+* Update `Newtonsoft.Json.dll` to the correct version, this fixes the client failing to connect to the server.
 
 **0.1.3**
 
@@ -91,3 +103,14 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 * Reconnect logic is unhelpful and may not reconnect you in the event of a network hiccup. You can restart the run but you may not send item checks for a while since
 it will also restart the item counter. (Which determines when to send an item check.) Items will still disappear, though, so it's not a perfect situation.
+* No UI or indication of when an item drop will become an item check.
+
+## To-do
+
+* Visual indicator when an item drop becomes an location check.
+* HUD for when a location check is about to complete.
+* HUD for last item sent.
+* HUD for locations checked over total locations.
+* Cache and load data package from file system.
+* Send chat messages to the multiworld. - Needs testing
+* Make chat scrollable maybe
