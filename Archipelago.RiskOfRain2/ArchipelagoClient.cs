@@ -17,15 +17,14 @@ using UnityEngine;
 namespace Archipelago.RiskOfRain2
 {
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
-    public class ArchipelagoClient
+    public class ArchipelagoClient : IDisposable
     {
-        public ArchipelagoItemLogicController ItemLogic = new ArchipelagoItemLogicController();
+        public ArchipelagoItemLogicController ItemLogic;
         public ArchipelagoHUDController HudController = new ArchipelagoHUDController();
 
         private ArchipelagoSession session;
         private DataPackagePacket dataPackagePacket;
         private ConnectedPacket connectedPacket;
-        private LocationInfoPacket locationInfoPacket;
         private ConnectPacket connectPacket;
 
         private Dictionary<int, string> playerNameById;        
@@ -51,12 +50,12 @@ namespace Archipelago.RiskOfRain2
 
             if (ItemLogic != null)
             {
-                ItemLogic.Unhook();
+                ItemLogic.Dispose();
             }
 
             if (HudController != null)
             {
-                HudController.Unhook();
+                HudController.Dispose();
             }
 
             connectPacket.Name = slotName;
@@ -64,14 +63,62 @@ namespace Archipelago.RiskOfRain2
 
             lastServerUrl = url;
             session = new ArchipelagoSession(url);
-            
-            HudController.Hook();
-            ItemLogic.Hook(session);
+            ItemLogic = new ArchipelagoItemLogicController(session);
+            HudController = new ArchipelagoHUDController();
+            ItemLogic.ItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             session.ConnectAsync();
             session.PacketReceived += Session_PacketReceived;
             session.SocketClosed += Session_SocketClosed;
             HookGame();
+        }
+
+        public void Dispose()
+        {
+            if (session.Connected)
+            {
+                session.Disconnect();
+            }
+
+            if (ItemLogic != null)
+            {
+                ItemLogic.ItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
+                ItemLogic.Dispose();
+            }
+
+            if (HudController != null)
+            {
+
+            }
+            HudController.Dispose();
+            UnhookGame();
+
+            session = null;
+        }
+
+        private void UpdatePlayerList(List<NetworkPlayer> players)
+        {
+            playerNameById = new Dictionary<int, string>
+            {
+                { 0, "Archipelago Server" }
+            };
+
+            foreach (var player in players)
+            {
+                playerNameById[player.Slot] = player.Name;
+            }
+        }
+        private void HookGame()
+        {
+            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
+            RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
+            On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
+        }
+        private void UnhookGame()
+        {
+            On.RoR2.UI.ChatBox.SubmitChat -= ChatBox_SubmitChat;
+            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
+            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
         }
 
         private void ItemLogicHandler_ItemDropProcessed(int pickedUpCount)
@@ -105,65 +152,26 @@ namespace Archipelago.RiskOfRain2
         private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
         {
             // Clean up
-            TearDownHud();
-            TearDownItemLogic();
+            if (ItemLogic != null)
+            {
+                ItemLogic.Dispose();
+            }
+
+            if (HudController != null)
+            {
+                HudController.Dispose();
+            }
+
             UnhookGame();
 
             if (e.WasClean)
             {
                 return;
             }
+
             //TODO: improve reconnect logic. immediate reconnect is nearly useless.
             // Reconnect
-            session = new ArchipelagoSession(lastServerUrl);
-            HookGame();
-            SetupHud();
-            SetupItemLogic(session);
-
-            session.ConnectAsync();
-            session.PacketReceived += Session_PacketReceived;
-            session.SocketClosed += Session_SocketClosed;
-        }
-
-        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
-        {
-            // TODO: prevent game over if more dio's can be incoming
-
-            // Are we in commencement?
-            if (Stage.instance.sceneDef.baseSceneName == "moon2")
-            {
-                var packet = new StatusUpdatePacket();
-                packet.Status = ArchipelagoClientState.ClientGoal;
-                session.SendPacket(packet);
-            }
-            orig(self, gameEndingDef);
-        }
-
-        private void Run_onRunDestroyGlobal(Run obj)
-        {
-            if (session.Connected)
-            {
-                session.Disconnect();
-            }
-
-            TearDownItemLogic();
-            TearDownHud();
-            UnhookGame();
-
-            session = null;
-        }
-
-        private void UpdatePlayerList(List<NetworkPlayer> players)
-        {
-            playerNameById = new Dictionary<int, string>
-            {
-                { 0, "Archipelago Server" }
-            };
-
-            foreach (var player in players)
-            {
-                playerNameById[player.Slot] = player.Name;
-            }
+            Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
@@ -188,7 +196,6 @@ namespace Archipelago.RiskOfRain2
                     {
                         connectedPacket = packet as ConnectedPacket;
                         UpdatePlayerList(connectedPacket.Players);
-                        ItemLogic.HandleConnectedPacket(connectedPacket);
                         HudController.ItemPickupStep = ItemLogic.ItemPickupStep;
 
                         //TODO: perhaps fix seed setting
@@ -206,27 +213,17 @@ namespace Archipelago.RiskOfRain2
                         }
                         break;
                     }
-                case ArchipelagoPacketType.LocationInfo:
-                    {
-                        locationInfoPacket = packet as LocationInfoPacket;
-                        break;
-                    }
-                case ArchipelagoPacketType.RoomUpdate:
-                    {
-                        var p = packet as RoomUpdatePacket;
-                        break;
-                    }
                 case ArchipelagoPacketType.Print:
                     {
-                        var p = packet as PrintPacket;
-                        ChatMessage.Send(p.Text);
+                        var printPacket = packet as PrintPacket;
+                        ChatMessage.Send(printPacket.Text);
                         break;
                     }
                 case ArchipelagoPacketType.PrintJSON:
                     {
-                        var p = packet as PrintJsonPacket;
+                        var printJsonPacket = packet as PrintJsonPacket;
                         string text = "";
-                        foreach (var part in p.Data)
+                        foreach (var part in printJsonPacket.Data)
                         {
                             switch (part.Type)
                             {
@@ -261,57 +258,28 @@ namespace Archipelago.RiskOfRain2
                 case ArchipelagoPacketType.DataPackage:
                     {
                         dataPackagePacket = packet as DataPackagePacket;
-                        ItemLogic.HandleDataPackage(dataPackagePacket);
                         session.SendPacket(connectPacket);
                         break;
                     }
             }
         }
-        private void HookGame()
+        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
-            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
-            RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
-            On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
-        }
-        private void UnhookGame()
-        {
-            On.RoR2.UI.ChatBox.SubmitChat -= ChatBox_SubmitChat;
-            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
-            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
-        }
+            // TODO: prevent game over if more dio's can be incoming
 
-        private void SetupHud()
-        {
-            if (HudController != null)
+            // Are we in commencement?
+            if (Stage.instance.sceneDef.baseSceneName == "moon2")
             {
-                HudController.Unhook();
+                var packet = new StatusUpdatePacket();
+                packet.Status = ArchipelagoClientState.ClientGoal;
+                session.SendPacket(packet);
             }
-            HudController = new ArchipelagoHUDController();
-            HudController.Hook();
+            orig(self, gameEndingDef);
         }
 
-        private void TearDownHud()
+        private void Run_onRunDestroyGlobal(Run obj)
         {
-            HudController.Unhook();
-            HudController = null;
-        }
-
-        private void SetupItemLogic(ArchipelagoSession session)
-        {
-            if (ItemLogic != null)
-            {
-                HudController.Unhook();
-            }
-            ItemLogic = new ArchipelagoItemLogicController();
-            ItemLogic.Hook(session);
-            ItemLogic.ItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
-        }
-
-        private void TearDownItemLogic()
-        {
-            ItemLogic.ItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
-            ItemLogic.Unhook();
-            ItemLogic = null;
+            Dispose();
         }
     }
 }

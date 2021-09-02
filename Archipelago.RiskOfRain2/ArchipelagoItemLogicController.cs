@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Extensions;
@@ -12,7 +13,7 @@ using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
 {
-    public class ArchipelagoItemLogicController
+    public class ArchipelagoItemLogicController : IDisposable
     {
         public int PickedUpItemCount { get; set; }
         public int ItemPickupStep { get; set; }
@@ -22,7 +23,6 @@ namespace Archipelago.RiskOfRain2
 
         private int totalLocations;
         private bool finishedAllChecks = false;
-        private bool hooked = false;
         private ArchipelagoSession session;
         private Queue<string> itemReceivedQueue = new Queue<string>();
         private Dictionary<int, string> itemLookupById;
@@ -37,54 +37,59 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
+        public ArchipelagoItemLogicController(ArchipelagoSession session)
+        {
+            this.session = session;
+            On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
+            On.RoR2.RoR2Application.Update += RoR2Application_Update;
+            session.PacketReceived += Session_PacketReceived;
+        }
+
+        private void Session_PacketReceived(ArchipelagoPacketBase packet)
+        {
+            switch(packet.PacketType)
+            {
+                case ArchipelagoPacketType.Connected:
+                    {
+                        var connectedPacket = packet as ConnectedPacket;
+                        // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
+                        ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
+                        totalLocations = Convert.ToInt32(connectedPacket.SlotData["totalLocations"]);
+
+                        // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
+                        // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
+                        PickedUpItemCount = connectedPacket.ItemsChecked.Count * ItemPickupStep;
+                        break;
+                    }
+                case ArchipelagoPacketType.DataPackage:
+                    {
+                        var dataPackagePacket = packet as DataPackagePacket;
+                        itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
+                        locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
+
+                        riskOfRainData = dataPackagePacket.DataPackage.Games["Risk of Rain 2"];
+                        break;
+                    }
+            }
+        }
+
         public void EnqueueItem(int itemId)
         {
             var item = itemLookupById[itemId];
             itemReceivedQueue.Enqueue(item);
         }
 
-        public void Hook(ArchipelagoSession session)
+        public void Dispose()
         {
-            hooked = true;
-            this.session = session;
-            On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
-            On.RoR2.RoR2Application.Update += RoR2Application_Update;
-        }
-
-        public void Unhook()
-        {
-            if (!hooked)
-            {
-                return;
-            }
-            hooked = false;
             On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update -= RoR2Application_Update;
+            session.PacketReceived -= Session_PacketReceived;
             session = null;
         }
 
         public void ResetPickedUpItemCount()
         {
             PickedUpItemCount = 0;
-        }
-
-        public void HandleConnectedPacket(ConnectedPacket connectedPacket)
-        {
-            // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
-            ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-            totalLocations = Convert.ToInt32(connectedPacket.SlotData["totalLocations"]);
-
-            // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
-            // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
-            PickedUpItemCount = connectedPacket.ItemsChecked.Count * ItemPickupStep;
-        }
-
-        public void HandleDataPackage(DataPackagePacket dataPackagePacket)
-        {
-            itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
-            locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
-
-            riskOfRainData = dataPackagePacket.DataPackage.Games["Risk of Rain 2"];
         }
 
         private void RoR2Application_Update(On.RoR2.RoR2Application.orig_Update orig, RoR2Application self)
@@ -179,6 +184,7 @@ namespace Archipelago.RiskOfRain2
 
         private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
         {
+            // Run `HandleItemDrop()` first so that the `PickedUpItemCount` is incremented by the time `ItemDropProcessed()` is called.
             var spawnItem = HandleItemDrop();
             
             if (ItemDropProcessed != null)

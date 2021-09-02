@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Archipelago.RiskOfRain2
 {
-    public class ArchipelagoHUDController
+    public class ArchipelagoHUDController : IDisposable
     {
         public int ItemPickupStep { get; set; }
         public int CurrentItemCount 
@@ -27,9 +27,15 @@ namespace Archipelago.RiskOfRain2
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
 
-        public void Hook()
+        public ArchipelagoHUDController()
         {
             On.RoR2.UI.HUD.Awake += HUD_Awake;
+        }
+
+        public void Dispose()
+        {
+            hud = null;
+            On.RoR2.UI.HUD.Awake -= HUD_Awake;
         }
 
         private void HUD_Awake(On.RoR2.UI.HUD.orig_Awake orig, RoR2.UI.HUD self)
@@ -87,12 +93,6 @@ namespace Archipelago.RiskOfRain2
             locationCheckBar.itemPickupStep = ItemPickupStep;
             locationCheckBar.fillRectTransform = progressBarGameObject.transform.Find("ShrunkenRoot/FillPanel").GetComponent<RectTransform>();
             return progressBarGameObject;
-        }
-
-        public void Unhook()
-        {
-            hud = null;
-            On.RoR2.UI.HUD.Awake -= HUD_Awake;
         }
     }
 }
