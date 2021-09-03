@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Archipelago.RiskOfRain2.Console;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI;
 using BepInEx;
@@ -41,7 +42,8 @@ namespace Archipelago.RiskOfRain2
 
             AP = new ArchipelagoClient();
             Run.onRunStartGlobal += Run_onRunStartGlobal;
-            ArchipelagoStartMessage.ArchipelagoStarted += ArchipelagoStartMessage_ArchipelagoStarted;
+            ArchipelagoStartMessage.OnArchipelagoStart += ArchipelagoStartMessage_ArchipelagoStarted;
+            ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
@@ -54,13 +56,25 @@ namespace Archipelago.RiskOfRain2
             NetworkingAPI.RegisterMessageType<ArchipelagoStartMessage>();
 
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
+            R2API.Utils.CommandHelper.AddToConsoleWhenReady();
+        }
+
+        private void ArchipelagoConsoleCommand_ArchipelagoCommandCalled(string url, int port, string slot, string password)
+        {
+            apEnabled = true;
+            var uri = new UriBuilder();
+            uri.Scheme = "ws://";
+            uri.Host = url;
+            uri.Port = port;
+
+            AP.Connect(uri.Uri.AbsoluteUri, slot, password);
         }
 
         private void ArchipelagoStartMessage_ArchipelagoStarted()
         {
             if (!NetworkServer.active)
             {
-                AP.HudController = new ArchipelagoHUDController();
+                AP.LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
             }
         }
 
@@ -112,7 +126,6 @@ namespace Archipelago.RiskOfRain2
                 player.cachedMaster.inventory.GiveItem(RoR2Content.Items.ShinyPearl, 10);
                 player.cachedMaster.inventory.GiveItem(RoR2Content.Items.Bear, 10);
                 player.cachedMaster.inventory.GiveItem(RoR2Content.Items.SprintBonus, 10);
-
             }
             else if (Input.GetKeyDown(KeyCode.F5))
             {

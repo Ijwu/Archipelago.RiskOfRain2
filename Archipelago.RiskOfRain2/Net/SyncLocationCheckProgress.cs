@@ -8,8 +8,8 @@ namespace Archipelago.RiskOfRain2.Net
 {
     public class SyncLocationCheckProgress : INetMessage
     {
-        public delegate void LocationCheckSynced(int count, int step);
-        public static event LocationCheckSynced LocationSynced;
+        public delegate void LocationCheckSyncHandler(int count, int step);
+        public static event LocationCheckSyncHandler OnLocationSynced;
 
         int itemPickupCount;
         int itemPickupStep;
@@ -33,9 +33,9 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void OnReceived()
         {
-            if (LocationSynced != null)
+            if (OnLocationSynced != null)
             {
-                LocationSynced(itemPickupCount, itemPickupStep);
+                OnLocationSynced(itemPickupCount, itemPickupStep);
             }
         }
 

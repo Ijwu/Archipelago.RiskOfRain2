@@ -18,8 +18,8 @@ namespace Archipelago.RiskOfRain2
         public int PickedUpItemCount { get; set; }
         public int ItemPickupStep { get; set; }
 
-        public delegate void ItemDropProcessedEvent(int pickedUpCount);
-        public event ItemDropProcessedEvent ItemDropProcessed;
+        public delegate void ItemDropProcessedHandler(int pickedUpCount);
+        public event ItemDropProcessedHandler OnItemDropProcessed;
 
         private int totalLocations;
         private bool finishedAllChecks = false;
@@ -199,9 +199,9 @@ namespace Archipelago.RiskOfRain2
             // Run `HandleItemDrop()` first so that the `PickedUpItemCount` is incremented by the time `ItemDropProcessed()` is called.
             var spawnItem = HandleItemDrop();
             
-            if (ItemDropProcessed != null)
+            if (OnItemDropProcessed != null)
             {
-                ItemDropProcessed(PickedUpItemCount);
+                OnItemDropProcessed(PickedUpItemCount);
             }
 
             // If finished all checks, don't do HandleItemDrop(), just let the item pickup spawn.

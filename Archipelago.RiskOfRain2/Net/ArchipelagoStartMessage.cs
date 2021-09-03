@@ -8,7 +8,7 @@ namespace Archipelago.RiskOfRain2.Net
 {
     public class ArchipelagoStartMessage : INetMessage
     {
-        public static event Action ArchipelagoStarted;
+        public static event Action OnArchipelagoStart;
 
         public void Deserialize(NetworkReader reader)
         {
@@ -17,7 +17,7 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void OnReceived()
         {
-            ArchipelagoStarted();
+            OnArchipelagoStart();
         }
 
         public void Serialize(NetworkWriter writer)

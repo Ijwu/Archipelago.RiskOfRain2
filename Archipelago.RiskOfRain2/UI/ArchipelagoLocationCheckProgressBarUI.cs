@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace Archipelago.RiskOfRain2.UI
 {
-    public class ArchipelagoHUDController : IDisposable
+    public class ArchipelagoLocationCheckProgressBarUI : IDisposable
     {
         public int ItemPickupStep { get; set; }
         public int CurrentItemCount { get; set; }
@@ -19,10 +19,10 @@ namespace Archipelago.RiskOfRain2.UI
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
 
-        public ArchipelagoHUDController()
+        public ArchipelagoLocationCheckProgressBarUI()
         {
             On.RoR2.UI.HUD.Awake += HUD_Awake;
-            SyncLocationCheckProgress.LocationSynced += SyncLocationCheckProgress_LocationSynced;
+            SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
         }
 
         private void SyncLocationCheckProgress_LocationSynced(int count, int step)
@@ -41,7 +41,7 @@ namespace Archipelago.RiskOfRain2.UI
         {
             hud = null;
             On.RoR2.UI.HUD.Awake -= HUD_Awake;
-            SyncLocationCheckProgress.LocationSynced -= SyncLocationCheckProgress_LocationSynced;
+            SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
         }
 
         private void HUD_Awake(On.RoR2.UI.HUD.orig_Awake orig, HUD self)
