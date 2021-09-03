@@ -13,13 +13,15 @@ namespace Archipelago.RiskOfRain2.UI
 
         public RectTransform fillRectTransform;
 
+        public CanvasRenderer canvas;
+
         public void Update()
         {
-            var x = Mathf.InverseLerp(0, itemPickupStep, currentItemCount);
-            if ((bool)fillRectTransform)
+            var progressPercent = Mathf.InverseLerp(0, itemPickupStep, currentItemCount);
+            if (fillRectTransform)
             {
                 fillRectTransform.anchorMin = new Vector2(0f, 0f);
-                fillRectTransform.anchorMax = new Vector2(x, 1f);
+                fillRectTransform.anchorMax = new Vector2(progressPercent, 1f);
                 fillRectTransform.sizeDelta = new Vector2(1f, 1f);
             }
         }

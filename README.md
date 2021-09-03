@@ -74,6 +74,7 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 * Remove `total_items` YAML option as it doesn't work as intended.
 * Other formatting tweaks to README.
+* Add HUD for location check progress. Now appears as a bar under your health bar. When it fills up all the way it will reset and you will send out a check.
 
 **0.1.4**
 
@@ -107,10 +108,17 @@ it will also restart the item counter. (Which determines when to send an item ch
 
 ## To-do
 
-* Visual indicator when an item drop becomes an location check.
-* HUD for when a location check is about to complete.
+* Visual indicator when an item drop becomes an location check. - done, smokescreen effect now pops up, needs pre-release test
+* HUD for when a location check is about to complete. - done, needs pre-release test
 * HUD for last item sent.
 * HUD for locations checked over total locations.
 * Cache and load data package from file system.
 * Send chat messages to the multiworld. - Needs testing
 * Make chat scrollable maybe
+* Further randomization in some way. Mob spawns, elite types, variance api, boss types, mob families, mobs with items, etc.
+* More item/reward types: money, exp, warbanner drops, drones
+* Funny/joke item types: launching you into the air, switch left and right click
+* Trap item types: spawn a family of mobs on you, spawn bosses, drop bombs on the stage
+* Randomize order of check sending.
+* Add objectives so that certain number of checks per level required per portal
+* Websocket error handling

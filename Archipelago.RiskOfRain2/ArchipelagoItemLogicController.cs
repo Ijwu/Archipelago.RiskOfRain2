@@ -7,6 +7,7 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Extensions;
+using R2API;
 using RoR2;
 using RoR2.UI;
 using UnityEngine;
@@ -29,6 +30,8 @@ namespace Archipelago.RiskOfRain2
         private Dictionary<int, string> locationLookupById;
         private GameData riskOfRainData;
 
+        private GameObject smokescreenPrefab;
+
         private bool IsInGame
         {
             get
@@ -43,14 +46,18 @@ namespace Archipelago.RiskOfRain2
             On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update += RoR2Application_Update;
             session.PacketReceived += Session_PacketReceived;
+
+            smokescreenPrefab = Resources.Load<GameObject>("Prefabs/Effects/SmokescreenEffect").InstantiateClone("LocationCheckPoof", true);
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
         {
-            switch(packet.PacketType)
+            Log.LogInfo($"Start ItemLogic PacketReceived: PacketType: {packet.PacketType}");
+            switch (packet.PacketType)
             {
                 case ArchipelagoPacketType.Connected:
                     {
+                        Log.LogInfo($"Start Connected");
                         var connectedPacket = packet as ConnectedPacket;
                         // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
                         ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
@@ -59,18 +66,38 @@ namespace Archipelago.RiskOfRain2
                         // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
                         // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
                         PickedUpItemCount = connectedPacket.ItemsChecked.Count * ItemPickupStep;
+                        Log.LogInfo($"End Connected");
                         break;
                     }
                 case ArchipelagoPacketType.DataPackage:
                     {
+                        Log.LogInfo($"Start DataPackage");
                         var dataPackagePacket = packet as DataPackagePacket;
                         itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
                         locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
 
                         riskOfRainData = dataPackagePacket.DataPackage.Games["Risk of Rain 2"];
+                        Log.LogInfo($"End DataPackage");
+                        break;
+                    }
+                case ArchipelagoPacketType.ReceivedItems:
+                    {
+                        Log.LogInfo($"Start ReceivedItems");
+                        var p = packet as ReceivedItemsPacket;
+                        foreach (var newItem in p.Items)
+                        {
+                            EnqueueItem(newItem.Item);
+                        }
+                        Log.LogInfo($"End ReceivedItems");
+                        break;
+                    }
+                default:
+                    {
+                        Log.LogInfo($"Defaulted");
                         break;
                     }
             }
+            Log.LogInfo($"End ItemLogic PacketReceived");
         }
 
         public void EnqueueItem(int itemId)
@@ -83,13 +110,12 @@ namespace Archipelago.RiskOfRain2
         {
             On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update -= RoR2Application_Update;
-            session.PacketReceived -= Session_PacketReceived;
-            session = null;
-        }
 
-        public void ResetPickedUpItemCount()
-        {
-            PickedUpItemCount = 0;
+            if (session != null)
+            {
+                session.PacketReceived -= Session_PacketReceived;
+                session = null;
+            }
         }
 
         private void RoR2Application_Update(On.RoR2.RoR2Application.orig_Update orig, RoR2Application self)
@@ -196,6 +222,11 @@ namespace Archipelago.RiskOfRain2
             if (finishedAllChecks || spawnItem)
             {
                 orig(pickupIndex, position, velocity);
+            }
+
+            if (!spawnItem)
+            {
+                EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() { origin = position }, true);
             }
         }
 
