@@ -41,6 +41,7 @@ namespace Archipelago.RiskOfRain2
             Log.Init(Logger);
 
             AP = new ArchipelagoClient();
+            AP.OnClientDisconnect += AP_OnClientDisconnect;
             Run.onRunStartGlobal += Run_onRunStartGlobal;
             ArchipelagoStartMessage.OnArchipelagoStart += ArchipelagoStartMessage_ArchipelagoStarted;
             ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
@@ -57,6 +58,15 @@ namespace Archipelago.RiskOfRain2
 
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
             R2API.Utils.CommandHelper.AddToConsoleWhenReady();
+        }
+
+        private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
+        {
+            var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
+            if (apEnabled && (isHost || RoR2Application.isInSinglePlayer))
+            {
+                StartCoroutine(AP.AttemptReconnect());
+            }
         }
 
         private void ArchipelagoConsoleCommand_ArchipelagoCommandCalled(string url, int port, string slot, string password)

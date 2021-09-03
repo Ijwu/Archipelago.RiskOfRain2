@@ -72,7 +72,9 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 **0.1.6**
 
-*
+* UI code refactor. Not visible to users, but code is slightly cleaner.
+* Improve reconnect logic.
+* Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
 
 **0.1.5 (Unreleased version)**
 
@@ -110,15 +112,15 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 it will also restart the item counter. (Which determines when to send an item check.) Items will still disappear, though, so it's not a perfect situation.
 * No UI or indication of when an item drop will become an item check.
 
-## To-do
+## To-do/Ideas
 
 * Visual indicator when an item drop becomes an location check. - done, smokescreen effect now pops up, needs pre-release test
 * HUD for when a location check is about to complete. - done, needs pre-release test
 * HUD for last item sent. - not doing
 * HUD for locations checked over total locations.
-* Cache and load data package from file system.
+* Cache and load data package from file system. - should probably go in packet lib
 * Send chat messages to the multiworld. - Needs testing
-* Make chat scrollable maybe
+* Make chat scrollable maybe - naw, there's probably mods for that
 * Further randomization in some way. Mob spawns, elite types, variance api, boss types, mob families, mobs with items, etc.
 * More item/reward types: money, exp, warbanner drops, drones
 * Funny/joke item types: launching you into the air, switch left and right click
@@ -126,3 +128,4 @@ it will also restart the item counter. (Which determines when to send an item ch
 * Randomize order of check sending.
 * Add objectives so that certain number of checks per level required per portal
 * Websocket error handling
+* Granting equipment should drop the existing one

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
@@ -11,14 +12,19 @@ using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
 using RoR2.UI;
+using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
 {
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
     public class ArchipelagoClient : IDisposable
     {
+        public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
+        public event ClientDisconnected OnClientDisconnect;
+
         public ArchipelagoItemLogicController ItemLogic;
-        public ArchipelagoHUDController HudController;
+        public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
+        public ArchipelagoConnectionStatusUI ConnectionStatusUI;
 
         private ArchipelagoSession session;
         private DataPackagePacket dataPackagePacket;
@@ -28,6 +34,7 @@ namespace Archipelago.RiskOfRain2
         private Dictionary<int, string> playerNameById;        
         private ulong seed;
         private string lastServerUrl;
+        private int retryCounter;
 
         public ArchipelagoClient()
         {
@@ -41,20 +48,7 @@ namespace Archipelago.RiskOfRain2
 
         public void Connect(string url, string slotName, string password = null)
         {
-            if (session != null && session.Connected)
-            {
-                session.Disconnect();
-            }
-
-            if (ItemLogic != null)
-            {
-                ItemLogic.Dispose();
-            }
-
-            if (HudController != null)
-            {
-                HudController.Dispose();
-            }
+            Dispose();
 
             connectPacket.Name = slotName;
             connectPacket.Password = password;
@@ -62,8 +56,9 @@ namespace Archipelago.RiskOfRain2
             lastServerUrl = url;
             session = new ArchipelagoSession(url);
             ItemLogic = new ArchipelagoItemLogicController(session);
-            HudController = new ArchipelagoHUDController();
-            ItemLogic.ItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
+            LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
+            ConnectionStatusUI = new ArchipelagoConnectionStatusUI();
+            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             session.ConnectAsync();
             session.PacketReceived += Session_PacketReceived;
@@ -81,15 +76,20 @@ namespace Archipelago.RiskOfRain2
 
             if (ItemLogic != null)
             {
-                ItemLogic.ItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
+                ItemLogic.OnItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
                 ItemLogic.Dispose();
             }
 
-            if (HudController != null)
+            if (LocationCheckBar != null)
             {
-                HudController.Dispose();
+                LocationCheckBar.Dispose();
             }
-            
+
+            if (ConnectionStatusUI != null)
+            {
+                ConnectionStatusUI.Dispose();
+            }
+
             UnhookGame();
             session = null;
         }
@@ -122,19 +122,19 @@ namespace Archipelago.RiskOfRain2
 
         private void ItemLogicHandler_ItemDropProcessed(int pickedUpCount)
         {
-            if (HudController != null)
+            if (LocationCheckBar != null)
             {
-                HudController.CurrentItemCount = pickedUpCount;
-                if ((HudController.CurrentItemCount % ItemLogic.ItemPickupStep) == 0)
+                LocationCheckBar.CurrentItemCount = pickedUpCount;
+                if ((LocationCheckBar.CurrentItemCount % ItemLogic.ItemPickupStep) == 0)
                 {
-                    HudController.CurrentItemCount = 0;
+                    LocationCheckBar.CurrentItemCount = 0;
                 }
                 else
                 {
-                    HudController.CurrentItemCount = HudController.CurrentItemCount % ItemLogic.ItemPickupStep;
+                    LocationCheckBar.CurrentItemCount = LocationCheckBar.CurrentItemCount % ItemLogic.ItemPickupStep;
                 }
             }
-            new SyncLocationCheckProgress(HudController.CurrentItemCount, HudController.ItemPickupStep).Send(NetworkDestination.Clients);
+            new SyncLocationCheckProgress(LocationCheckBar.CurrentItemCount, LocationCheckBar.ItemPickupStep).Send(NetworkDestination.Clients);
         }
 
         private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, ChatBox self)
@@ -157,27 +157,24 @@ namespace Archipelago.RiskOfRain2
 
         private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
         {
-            // Clean up
-            if (ItemLogic != null)
+            Dispose();
+
+            if (OnClientDisconnect != null)
             {
-                ItemLogic.Dispose();
+                OnClientDisconnect(e.Code, e.Reason, e.WasClean);
             }
+        }
 
-            if (HudController != null)
+        public IEnumerator AttemptReconnect()
+        {
+            retryCounter = 0;
+
+            while (!session.Connected && retryCounter < 5)
             {
-                HudController.Dispose();
+                Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
+                retryCounter++;
+                yield return new WaitForSeconds(3f);
             }
-
-            UnhookGame();
-
-            if (e.WasClean)
-            {
-                return;
-            }
-
-            //TODO: improve reconnect logic. immediate reconnect is nearly useless.
-            // Reconnect
-            Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
@@ -202,7 +199,7 @@ namespace Archipelago.RiskOfRain2
                     {
                         connectedPacket = packet as ConnectedPacket;
                         UpdatePlayerList(connectedPacket.Players);
-                        HudController.ItemPickupStep = ItemLogic.ItemPickupStep;
+                        LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
 
                         //TODO: perhaps fix seed setting
                         seed = Convert.ToUInt64(connectedPacket.SlotData["seed"]);
