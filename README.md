@@ -70,7 +70,11 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## Changelog
 
-**0.1.5**
+**0.1.6**
+
+*
+
+**0.1.5 (Unreleased version)**
 
 * Remove `total_items` YAML option as it doesn't work as intended.
 * Other formatting tweaks to README.
@@ -110,7 +114,7 @@ it will also restart the item counter. (Which determines when to send an item ch
 
 * Visual indicator when an item drop becomes an location check. - done, smokescreen effect now pops up, needs pre-release test
 * HUD for when a location check is about to complete. - done, needs pre-release test
-* HUD for last item sent.
+* HUD for last item sent. - not doing
 * HUD for locations checked over total locations.
 * Cache and load data package from file system.
 * Send chat messages to the multiworld. - Needs testing
