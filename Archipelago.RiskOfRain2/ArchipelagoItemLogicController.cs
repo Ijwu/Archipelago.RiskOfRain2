@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
@@ -52,12 +51,10 @@ namespace Archipelago.RiskOfRain2
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
         {
-            Log.LogInfo($"Start ItemLogic PacketReceived: PacketType: {packet.PacketType}");
             switch (packet.PacketType)
             {
                 case ArchipelagoPacketType.Connected:
                     {
-                        Log.LogInfo($"Start Connected");
                         var connectedPacket = packet as ConnectedPacket;
                         // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
                         ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
@@ -66,38 +63,27 @@ namespace Archipelago.RiskOfRain2
                         // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
                         // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
                         PickedUpItemCount = connectedPacket.ItemsChecked.Count * ItemPickupStep;
-                        Log.LogInfo($"End Connected");
                         break;
                     }
                 case ArchipelagoPacketType.DataPackage:
                     {
-                        Log.LogInfo($"Start DataPackage");
                         var dataPackagePacket = packet as DataPackagePacket;
                         itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
                         locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
 
                         riskOfRainData = dataPackagePacket.DataPackage.Games["Risk of Rain 2"];
-                        Log.LogInfo($"End DataPackage");
                         break;
                     }
                 case ArchipelagoPacketType.ReceivedItems:
                     {
-                        Log.LogInfo($"Start ReceivedItems");
                         var p = packet as ReceivedItemsPacket;
                         foreach (var newItem in p.Items)
                         {
                             EnqueueItem(newItem.Item);
                         }
-                        Log.LogInfo($"End ReceivedItems");
-                        break;
-                    }
-                default:
-                    {
-                        Log.LogInfo($"Defaulted");
                         break;
                     }
             }
-            Log.LogInfo($"End ItemLogic PacketReceived");
         }
 
         public void EnqueueItem(int itemId)

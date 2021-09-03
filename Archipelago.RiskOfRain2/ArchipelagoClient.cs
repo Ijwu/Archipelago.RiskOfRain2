@@ -1,21 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
-using Archipelago.RiskOfRain2.Extensions;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI;
-using R2API;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
 using RoR2.UI;
-using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
 {
@@ -117,6 +112,7 @@ namespace Archipelago.RiskOfRain2
             RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
             On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
         }
+
         private void UnhookGame()
         {
             On.RoR2.UI.ChatBox.SubmitChat -= ChatBox_SubmitChat;
@@ -186,30 +182,24 @@ namespace Archipelago.RiskOfRain2
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
         {
-            Log.LogInfo($"Started PacketReceived: Type: {packet.PacketType}");
             switch (packet.PacketType)
             {
                 case ArchipelagoPacketType.RoomInfo:
                     {
-                        Log.LogInfo($"Start RoomInfo");
                         session.SendPacket(new GetDataPackagePacket());
-                        Log.LogInfo($"End RoomInfo");
                         break;
                     }
                 case ArchipelagoPacketType.ConnectionRefused:
                     {
-                        Log.LogInfo($"Start ConnectionRefused");
                         var p = packet as ConnectionRefusedPacket;
                         foreach (string err in p.Errors)
                         {
                             Log.LogError(err);
                         }
-                        Log.LogInfo($"End ConnectionRefused");
                         break;
                     }
                 case ArchipelagoPacketType.Connected:
                     {
-                        Log.LogInfo($"Start Connected");
                         connectedPacket = packet as ConnectedPacket;
                         UpdatePlayerList(connectedPacket.Players);
                         HudController.ItemPickupStep = ItemLogic.ItemPickupStep;
@@ -217,20 +207,16 @@ namespace Archipelago.RiskOfRain2
                         //TODO: perhaps fix seed setting
                         seed = Convert.ToUInt64(connectedPacket.SlotData["seed"]);
                         //On.RoR2.Run.Start += (orig, instance) => { instance.seed = seed; orig(instance); };
-                        Log.LogInfo($"End Connected");
                         break;
                     }
                 case ArchipelagoPacketType.Print:
                     {
-                        Log.LogInfo($"Start Print");
                         var printPacket = packet as PrintPacket;
                         ChatMessage.Send(printPacket.Text);
-                        Log.LogInfo($"End Print");
                         break;
                     }
                 case ArchipelagoPacketType.PrintJSON:
                     {
-                        Log.LogInfo($"Start PrintJSON");
                         var printJsonPacket = packet as PrintJsonPacket;
                         string text = "";
                         foreach (var part in printJsonPacket.Data)
@@ -263,24 +249,15 @@ namespace Archipelago.RiskOfRain2
                             }
                         }
                         ChatMessage.Send(text);
-                        Log.LogInfo($"End PrintJSON");
                         break;
                     }
                 case ArchipelagoPacketType.DataPackage:
                     {
-                        Log.LogInfo($"Start DataPackage");
                         dataPackagePacket = packet as DataPackagePacket;
                         session.SendPacket(connectPacket);
-                        Log.LogInfo($"End DataPackage");
-                        break;
-                    }
-                default:
-                    {
-                        Log.LogInfo($"Defaulted");
                         break;
                     }
             }
-            Log.LogInfo($"End PacketReceived");
         }
         private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
