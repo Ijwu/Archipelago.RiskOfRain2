@@ -76,9 +76,13 @@ namespace Archipelago.RiskOfRain2
                     }
                 case ArchipelagoPacketType.ReceivedItems:
                     {
+                        // Skip first ReceivedItems packet received after a disconnect->reconnect.
+                        // (Otherwise our items would get duped. That's OP, yo.)
                         if (ArchipelagoClient.RecentlyReconnected)
                         {
+                            ArchipelagoClient.RecentlyReconnected = false;
                             break;
+                            
                         }
 
                         var p = packet as ReceivedItemsPacket;

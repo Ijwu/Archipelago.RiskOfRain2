@@ -62,13 +62,12 @@ namespace Archipelago.RiskOfRain2
 
         private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
         {
-            ArchipelagoClient.RecentlyReconnected = false;
             Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
             ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
             if (apEnabled && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
             {
-                StartCoroutine(AP.AttemptReconnect());
+                StartCoroutine(AP.AttemptConnection());
             }
         }
 
@@ -80,7 +79,11 @@ namespace Archipelago.RiskOfRain2
             uri.Host = url;
             uri.Port = port;
 
-            AP.Connect(uri.Uri.AbsoluteUri, slot, password);
+            AP.LastServerUrl = uri.Uri.AbsoluteUri;
+            AP.SlotName = slot;
+            AP.Password = password;
+
+            StartCoroutine(AP.AttemptConnection());
         }
 
         private void ArchipelagoStartMessage_ArchipelagoStarted()
@@ -120,6 +123,7 @@ namespace Archipelago.RiskOfRain2
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
         }
 
+#if DEBUG
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.F3))
@@ -154,5 +158,6 @@ namespace Archipelago.RiskOfRain2
                 Log.LogInfo("------- Log Marker ---------");
             }
         }
+#endif
     }
 }

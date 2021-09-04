@@ -73,12 +73,13 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 **0.1.6**
 
 * UI code refactor. Not visible to users, but code is slightly cleaner.
-* Improve reconnect logic.
 * Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
 * Reconnect logic is greatly improved. Now attempts to reconnect every 5 seconds for 5 tries. If it fails entirely, you can use the archipelago command.
 
-**0.1.5 (Unreleased version)**
+**0.1.5 (Unreleased)**
 
+* Chat messages go out to the multiworld now.
+* Smoke effect now appears when an item drop is turned into a location check as a visual indicator of sending out a check.
 * Remove `total_items` YAML option as it doesn't work as intended.
 * Other formatting tweaks to README.
 * Add HUD for location check progress. Now appears as a bar under your health bar. When it fills up all the way it will reset and you will send out a check.
@@ -111,20 +112,23 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 * If you start a new run but join an existing AP session, you will get spammed with notifications for all your pickups.
 * Reconnect breaks location check UI
+* Reconnect with command seems to break all item grants from AP
 
 ## To-do/Ideas
 
 * Visual indicator when an item drop becomes an location check. - done, smokescreen effect now pops up, needs pre-release test
 * HUD for when a location check is about to complete. - done, needs pre-release test
-* HUD for last item sent. - not doing
+* Send chat messages to the multiworld. - Needs testing
+
 * HUD for locations checked over total locations.
 * Cache and load data package from file system. - should probably go in packet lib
-* Send chat messages to the multiworld. - Needs testing
-* Make chat scrollable maybe - naw, there's probably mods for that
 * Further randomization in some way. Mob spawns, elite types, variance api, boss types, mob families, mobs with items, etc.
 * More item/reward types: money, exp, warbanner drops, drones
 * Funny/joke item types: launching you into the air, switch left and right click
 * Trap item types: spawn a family of mobs on you, spawn bosses, drop bombs on the stage
 * Randomize order of check sending.
+* YAML options for types of item drops? Chests/Scrapper/Multishop/Boss/LunarCoin/GoldChests
+* YAML options for scrap drops.
 * Add objectives so that certain number of checks per level required per portal
 * Granting equipment should drop the existing one
+* Randomize pickup step every stage or every pickup?

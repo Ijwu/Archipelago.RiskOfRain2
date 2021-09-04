@@ -24,7 +24,34 @@ namespace Archipelago.RiskOfRain2
 
         public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
         public event ClientDisconnected OnClientDisconnect;
-        
+
+        public string LastServerUrl { get; set; }
+        public string SlotName
+        {
+            get
+            {
+                return connectPacket.Name;
+            }
+
+            set
+            {
+                connectPacket.Name = value;
+            }
+        }
+    
+        public string Password
+        {
+            get
+            {
+                return connectPacket.Password;
+            }
+
+            set
+            {
+                connectPacket.Password = value;
+            }
+        }
+
         public ArchipelagoItemLogicController ItemLogic;
         public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
 
@@ -35,7 +62,7 @@ namespace Archipelago.RiskOfRain2
 
         private Dictionary<int, string> playerNameById;        
         private ulong seed;
-        private string lastServerUrl;
+        
         private bool reconnecting = false;
 
         public ArchipelagoClient()
@@ -55,7 +82,7 @@ namespace Archipelago.RiskOfRain2
             connectPacket.Name = slotName;
             connectPacket.Password = password;
 
-            lastServerUrl = url;
+            LastServerUrl = url;
             session = new ArchipelagoSession(url);
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
@@ -167,26 +194,27 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        public IEnumerator AttemptReconnect()
+        public IEnumerator AttemptConnection()
         {
             reconnecting = true;
             var retryCounter = 0;
 
             while ((session == null || !session.Connected)&& retryCounter < 5)
             {
-                ChatMessage.Send($"Reconnection attempt #{retryCounter}");
+                ChatMessage.Send($"Connection attempt #{retryCounter+1}");
                 retryCounter++;
                 yield return new WaitForSeconds(3f);
-                Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
+                Connect(LastServerUrl, connectPacket.Name, connectPacket.Password);
             }
 
             if (session == null || !session.Connected)
             {
-                ChatMessage.SendColored("Could not reconnect to Archipelago.", Color.red);
+                ChatMessage.SendColored("Could not connect to Archipelago.", Color.red);
+                Dispose();
             }
             else if (session != null && session.Connected)
             {
-                ChatMessage.SendColored("Re-established Archipelago connection.", Color.green);
+                ChatMessage.SendColored("Established Archipelago connection.", Color.green);
             }
 
             reconnecting = false;
