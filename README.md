@@ -75,6 +75,7 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 * UI code refactor. Not visible to users, but code is slightly cleaner.
 * Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
 * Reconnect logic is greatly improved. Now attempts to reconnect every 5 seconds for 5 tries. If it fails entirely, you can use the archipelago command.
+* Your existing equipment drops at your feet when you are granted one from the server. The new one swaps into the slot.
 
 **0.1.5 (Unreleased)**
 
