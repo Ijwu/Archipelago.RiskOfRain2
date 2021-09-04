@@ -176,6 +176,18 @@ namespace Archipelago.RiskOfRain2
             foreach (var player in PlayerCharacterMasterController.instances)
             {
                 var inventory = player.master.inventory;
+                var activeEquipment = inventory.GetEquipment(inventory.activeEquipmentSlot);
+                if (!activeEquipment.Equals(EquipmentState.empty))
+                {
+                    var pickupInfo = new GenericPickupController.CreatePickupInfo()
+                    {
+                        pickupIndex = PickupCatalog.FindPickupIndex(activeEquipment.equipmentIndex),
+                        position = player.master.GetBodyObject().transform.position,
+                        rotation = Quaternion.identity
+                    };
+                    GenericPickupController.CreatePickup(pickupInfo);
+                }
+
                 inventory.SetEquipmentIndex(PickupCatalog.GetPickupDef(pickupIndex)?.equipmentIndex ?? EquipmentIndex.None);
                 DisplayPickupNotification(pickupIndex);
             }
