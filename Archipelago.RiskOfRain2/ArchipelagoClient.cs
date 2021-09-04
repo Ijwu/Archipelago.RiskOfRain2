@@ -19,12 +19,14 @@ namespace Archipelago.RiskOfRain2
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
     public class ArchipelagoClient : IDisposable
     {
+        // Making this static is dirty, I know. But this is gamedev. Gamedev is a cesspool and you know it.
+        public static bool RecentlyReconnected = false;
+
         public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
         public event ClientDisconnected OnClientDisconnect;
-
+        
         public ArchipelagoItemLogicController ItemLogic;
         public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
-        public ArchipelagoConnectionStatusUI ConnectionStatusUI;
 
         private ArchipelagoSession session;
         private DataPackagePacket dataPackagePacket;
@@ -34,7 +36,7 @@ namespace Archipelago.RiskOfRain2
         private Dictionary<int, string> playerNameById;        
         private ulong seed;
         private string lastServerUrl;
-        private int retryCounter;
+        private bool reconnecting = false;
 
         public ArchipelagoClient()
         {
@@ -57,39 +59,39 @@ namespace Archipelago.RiskOfRain2
             session = new ArchipelagoSession(url);
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
-            ConnectionStatusUI = new ArchipelagoConnectionStatusUI();
             ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             session.ConnectAsync();
             session.PacketReceived += Session_PacketReceived;
             session.SocketClosed += Session_SocketClosed;
+
+            if (reconnecting)
+            {
+                return;
+            }
+
             HookGame();
             new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
         }
 
         public void Dispose()
         {
-            if (session.Connected)
+            if (session != null && session.Connected)
             {
                 session.Disconnect();
             }
-
+            
             if (ItemLogic != null)
             {
                 ItemLogic.OnItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
                 ItemLogic.Dispose();
             }
-
+            
             if (LocationCheckBar != null)
             {
                 LocationCheckBar.Dispose();
             }
-
-            if (ConnectionStatusUI != null)
-            {
-                ConnectionStatusUI.Dispose();
-            }
-
+         
             UnhookGame();
             session = null;
         }
@@ -167,14 +169,28 @@ namespace Archipelago.RiskOfRain2
 
         public IEnumerator AttemptReconnect()
         {
-            retryCounter = 0;
+            reconnecting = true;
+            var retryCounter = 0;
 
-            while (!session.Connected && retryCounter < 5)
+            while ((session == null || !session.Connected)&& retryCounter < 5)
             {
-                Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
+                ChatMessage.Send($"Reconnection attempt #{retryCounter}");
                 retryCounter++;
                 yield return new WaitForSeconds(3f);
+                Connect(lastServerUrl, connectPacket.Name, connectPacket.Password);
             }
+
+            if (session == null || !session.Connected)
+            {
+                ChatMessage.SendColored("Could not reconnect to Archipelago.", Color.red);
+            }
+            else if (session != null && session.Connected)
+            {
+                ChatMessage.SendColored("Re-established Archipelago connection.", Color.green);
+            }
+
+            reconnecting = false;
+            RecentlyReconnected = true;
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)

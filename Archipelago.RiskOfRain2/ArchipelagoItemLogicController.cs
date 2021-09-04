@@ -76,6 +76,11 @@ namespace Archipelago.RiskOfRain2
                     }
                 case ArchipelagoPacketType.ReceivedItems:
                     {
+                        if (ArchipelagoClient.RecentlyReconnected)
+                        {
+                            break;
+                        }
+
                         var p = packet as ReceivedItemsPacket;
                         foreach (var newItem in p.Items)
                         {

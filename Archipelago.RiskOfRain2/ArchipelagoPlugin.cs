@@ -20,7 +20,7 @@ namespace Archipelago.RiskOfRain2
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.HardDependency)]
-    [R2APISubmoduleDependency(nameof(NetworkingAPI), nameof(PrefabAPI))]
+    [R2APISubmoduleDependency(nameof(NetworkingAPI), nameof(PrefabAPI), nameof(CommandHelper))]
     public class ArchipelagoPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = "com.Ijwu.Archipelago";
@@ -62,8 +62,11 @@ namespace Archipelago.RiskOfRain2
 
         private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
         {
+            ArchipelagoClient.RecentlyReconnected = false;
+            Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
+            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (apEnabled && (isHost || RoR2Application.isInSinglePlayer))
+            if (apEnabled && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
             {
                 StartCoroutine(AP.AttemptReconnect());
             }

@@ -75,6 +75,7 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 * UI code refactor. Not visible to users, but code is slightly cleaner.
 * Improve reconnect logic.
 * Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
+* Reconnect logic is greatly improved. Now attempts to reconnect every 5 seconds for 5 tries. If it fails entirely, you can use the archipelago command.
 
 **0.1.5 (Unreleased version)**
 
@@ -108,9 +109,8 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## Known Issues
 
-* Reconnect logic is unhelpful and may not reconnect you in the event of a network hiccup. You can restart the run but you may not send item checks for a while since
-it will also restart the item counter. (Which determines when to send an item check.) Items will still disappear, though, so it's not a perfect situation.
-* No UI or indication of when an item drop will become an item check.
+* If you start a new run but join an existing AP session, you will get spammed with notifications for all your pickups.
+* Reconnect breaks location check UI
 
 ## To-do/Ideas
 
@@ -127,5 +127,4 @@ it will also restart the item counter. (Which determines when to send an item ch
 * Trap item types: spawn a family of mobs on you, spawn bosses, drop bombs on the stage
 * Randomize order of check sending.
 * Add objectives so that certain number of checks per level required per portal
-* Websocket error handling
 * Granting equipment should drop the existing one
