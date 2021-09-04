@@ -6,7 +6,11 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Extensions;
+using Archipelago.RiskOfRain2.Net;
+using Archipelago.RiskOfRain2.UI;
 using R2API;
+using R2API.Networking;
+using R2API.Networking.Interfaces;
 using RoR2;
 using RoR2.UI;
 using UnityEngine;
@@ -17,11 +21,12 @@ namespace Archipelago.RiskOfRain2
     {
         public int PickedUpItemCount { get; set; }
         public int ItemPickupStep { get; set; }
+        public int CurrentChecks { get; set; }
+        public int TotalChecks { get; set; }
 
         public delegate void ItemDropProcessedHandler(int pickedUpCount);
         public event ItemDropProcessedHandler OnItemDropProcessed;
 
-        private int totalLocations;
         private bool finishedAllChecks = false;
         private ArchipelagoSession session;
         private Queue<string> itemReceivedQueue = new Queue<string>();
@@ -58,7 +63,13 @@ namespace Archipelago.RiskOfRain2
                         var connectedPacket = packet as ConnectedPacket;
                         // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
                         ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-                        totalLocations = Convert.ToInt32(connectedPacket.SlotData["totalLocations"]);
+                        TotalChecks = Convert.ToInt32(connectedPacket.SlotData["totalLocations"]);
+                        CurrentChecks = connectedPacket.ItemsChecked.Count;
+
+                        ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
+                        ArchipelagoTotalChecksObjectiveController.TotalChecks = TotalChecks;
+
+                        new SyncTotalCheckProgress(CurrentChecks, TotalChecks).Send(NetworkDestination.Clients);
 
                         // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
                         // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
@@ -179,10 +190,18 @@ namespace Archipelago.RiskOfRain2
                 var activeEquipment = inventory.GetEquipment(inventory.activeEquipmentSlot);
                 if (!activeEquipment.Equals(EquipmentState.empty))
                 {
+                    var playerBody = player.master.GetBodyObject();
+
+                    if (playerBody == null)
+                    {
+                        //TODO: maybe deal with this
+                        return;
+                    }
+
                     var pickupInfo = new GenericPickupController.CreatePickupInfo()
                     {
                         pickupIndex = PickupCatalog.FindPickupIndex(activeEquipment.equipmentIndex),
-                        position = player.master.GetBodyObject().transform.position,
+                        position = playerBody.transform.position,
                         rotation = Quaternion.identity
                     };
                     GenericPickupController.CreatePickup(pickupInfo);
@@ -235,6 +254,14 @@ namespace Archipelago.RiskOfRain2
             {
                 EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() { origin = position }, true);
             }
+
+            new SyncTotalCheckProgress(finishedAllChecks ? TotalChecks : CurrentChecks, TotalChecks).Send(NetworkDestination.Clients);
+
+            if (finishedAllChecks)
+            {
+                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+                new RemoveCheckObjective().Send(NetworkDestination.Clients);
+            }
         }
 
         private bool HandleItemDrop()
@@ -243,15 +270,18 @@ namespace Archipelago.RiskOfRain2
 
             if ((PickedUpItemCount % ItemPickupStep) == 0)
             {
-                var itemSendIndex = PickedUpItemCount / ItemPickupStep;
+                CurrentChecks = PickedUpItemCount / ItemPickupStep;
 
-                if (itemSendIndex > totalLocations)
+                ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
+
+                if (CurrentChecks >= TotalChecks)
                 {
+                    ArchipelagoTotalChecksObjectiveController.CurrentChecks = ArchipelagoTotalChecksObjectiveController.TotalChecks;
                     finishedAllChecks = true;
                     return true;
                 }
 
-                var itemSendName = $"ItemPickup{itemSendIndex}";
+                var itemSendName = $"ItemPickup{CurrentChecks+1}";
                 var itemLocationId = riskOfRainData.LocationLookup[itemSendName];
 
                 var packet = new LocationChecksPacket();

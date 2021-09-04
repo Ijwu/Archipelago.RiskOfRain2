@@ -10,10 +10,8 @@ using R2API;
 using R2API.Networking;
 using R2API.Utils;
 using RoR2;
-using RoR2.UI;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 
 namespace Archipelago.RiskOfRain2
 {
@@ -43,6 +41,7 @@ namespace Archipelago.RiskOfRain2
             AP = new ArchipelagoClient();
             AP.OnClientDisconnect += AP_OnClientDisconnect;
             Run.onRunStartGlobal += Run_onRunStartGlobal;
+            Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
             ArchipelagoStartMessage.OnArchipelagoStart += ArchipelagoStartMessage_ArchipelagoStarted;
             ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
 
@@ -55,9 +54,11 @@ namespace Archipelago.RiskOfRain2
 
             NetworkingAPI.RegisterMessageType<SyncLocationCheckProgress>();
             NetworkingAPI.RegisterMessageType<ArchipelagoStartMessage>();
+            NetworkingAPI.RegisterMessageType<SyncTotalCheckProgress>();
+            NetworkingAPI.RegisterMessageType<RemoveCheckObjective>();
 
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
-            R2API.Utils.CommandHelper.AddToConsoleWhenReady();
+            CommandHelper.AddToConsoleWhenReady();
         }
 
         private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
@@ -105,6 +106,19 @@ namespace Archipelago.RiskOfRain2
                 uri.Port = apServerPort;
                 
                 AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
+            }
+
+            if (apEnabled)
+            {
+                ArchipelagoTotalChecksObjectiveController.AddObjective();
+            }
+        }
+
+        private void Run_onRunDestroyGlobal(Run obj)
+        {
+            if (apEnabled)
+            {
+                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
             }
         }
 

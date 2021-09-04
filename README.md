@@ -76,6 +76,7 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 * Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
 * Reconnect logic is greatly improved. Now attempts to reconnect every 5 seconds for 5 tries. If it fails entirely, you can use the archipelago command.
 * Your existing equipment drops at your feet when you are granted one from the server. The new one swaps into the slot.
+* Add objective tracker for total number of checks remaining.
 
 **0.1.5 (Unreleased)**
 
@@ -117,11 +118,6 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## To-do/Ideas
 
-* Visual indicator when an item drop becomes an location check. - done, smokescreen effect now pops up, needs pre-release test
-* HUD for when a location check is about to complete. - done, needs pre-release test
-* Send chat messages to the multiworld. - Needs testing
-
-* HUD for locations checked over total locations.
 * Cache and load data package from file system. - should probably go in packet lib
 * Further randomization in some way. Mob spawns, elite types, variance api, boss types, mob families, mobs with items, etc.
 * More item/reward types: money, exp, warbanner drops, drones
@@ -131,5 +127,4 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 * YAML options for types of item drops? Chests/Scrapper/Multishop/Boss/LunarCoin/GoldChests
 * YAML options for scrap drops.
 * Add objectives so that certain number of checks per level required per portal
-* Granting equipment should drop the existing one
-* Randomize pickup step every stage or every pickup?
+* Randomize pickup step every stage or every check?

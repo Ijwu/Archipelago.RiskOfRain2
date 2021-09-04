@@ -81,16 +81,17 @@ namespace Archipelago.RiskOfRain2
 
             connectPacket.Name = slotName;
             connectPacket.Password = password;
-
             LastServerUrl = url;
+
             session = new ArchipelagoSession(url);
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
-            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             session.ConnectAsync();
+
             session.PacketReceived += Session_PacketReceived;
             session.SocketClosed += Session_SocketClosed;
+            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             if (reconnecting)
             {
