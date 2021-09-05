@@ -237,7 +237,7 @@ namespace Archipelago.RiskOfRain2
         private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
         {
             // Run `HandleItemDrop()` first so that the `PickedUpItemCount` is incremented by the time `ItemDropProcessed()` is called.
-            var spawnItem = HandleItemDrop();
+            var spawnItem = finishedAllChecks || HandleItemDrop();
             
             if (OnItemDropProcessed != null)
             {
@@ -260,7 +260,7 @@ namespace Archipelago.RiskOfRain2
             if (finishedAllChecks)
             {
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
-                new RemoveCheckObjective().Send(NetworkDestination.Clients);
+                new AllChecksComplete().Send(NetworkDestination.Clients);
             }
         }
 
@@ -274,15 +274,15 @@ namespace Archipelago.RiskOfRain2
 
                 ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
 
-                if (CurrentChecks >= TotalChecks)
+                if (CurrentChecks == TotalChecks)
                 {
                     ArchipelagoTotalChecksObjectiveController.CurrentChecks = ArchipelagoTotalChecksObjectiveController.TotalChecks;
                     finishedAllChecks = true;
-                    return true;
                 }
 
-                var itemSendName = $"ItemPickup{CurrentChecks+1}";
+                var itemSendName = $"ItemPickup{CurrentChecks}";
                 var itemLocationId = riskOfRainData.LocationLookup[itemSendName];
+                Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");
 
                 var packet = new LocationChecksPacket();
                 packet.Locations = new List<int> { itemLocationId };

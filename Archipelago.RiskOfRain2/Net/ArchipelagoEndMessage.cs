@@ -6,23 +6,23 @@ using UnityEngine.Networking;
 
 namespace Archipelago.RiskOfRain2.Net
 {
-    public class ArchipelagoStartMessage : INetMessage
+    public class ArchipelagoEndMessage : INetMessage
     {
-        public static event Action OnArchipelagoSessionStart;
+        public static event Action OnArchipelagoSessionEnd;
 
         public void Deserialize(NetworkReader reader)
         {
-            
+            Log.LogInfo("Receiving ArchipelagoEndMessage");
         }
 
         public void OnReceived()
         {
-            OnArchipelagoSessionStart();
+            OnArchipelagoSessionEnd();
         }
 
         public void Serialize(NetworkWriter writer)
         {
-            
+            Log.LogInfo("Sending ArchipelagoEndMessage");
         }
     }
 }

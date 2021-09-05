@@ -141,6 +141,7 @@ namespace Archipelago.RiskOfRain2
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
             RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
             On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
+            ArchipelagoChatMessage.OnChatReceivedFromClient += ArchipelagoChatMessage_OnChatReceivedFromClient;
         }
 
         private void UnhookGame()
@@ -148,6 +149,17 @@ namespace Archipelago.RiskOfRain2
             On.RoR2.UI.ChatBox.SubmitChat -= ChatBox_SubmitChat;
             RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
             On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
+            ArchipelagoChatMessage.OnChatReceivedFromClient -= ArchipelagoChatMessage_OnChatReceivedFromClient;
+        }
+
+        private void ArchipelagoChatMessage_OnChatReceivedFromClient(string message)
+        {
+            if (session.Connected && !string.IsNullOrEmpty(message))
+            {
+                var sayPacket = new SayPacket();
+                sayPacket.Text = message;
+                session.SendPacket(sayPacket);
+            }
         }
 
         private void ItemLogicHandler_ItemDropProcessed(int pickedUpCount)
@@ -188,6 +200,7 @@ namespace Archipelago.RiskOfRain2
         private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
         {
             Dispose();
+            new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
 
             if (OnClientDisconnect != null)
             {
@@ -216,6 +229,7 @@ namespace Archipelago.RiskOfRain2
             else if (session != null && session.Connected)
             {
                 ChatMessage.SendColored("Established Archipelago connection.", Color.green);
+                new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
             }
 
             reconnecting = false;
@@ -311,6 +325,8 @@ namespace Archipelago.RiskOfRain2
                 var packet = new StatusUpdatePacket();
                 packet.Status = ArchipelagoClientState.ClientGoal;
                 session.SendPacket(packet);
+
+                new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
             }
             orig(self, gameEndingDef);
         }

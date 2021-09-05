@@ -7,8 +7,10 @@ using UnityEngine.Networking;
 
 namespace Archipelago.RiskOfRain2.Net
 {
-    public class RemoveCheckObjective : INetMessage
+    public class AllChecksComplete : INetMessage
     {
+        public static event Action OnAllChecksComplete;
+
         public void Deserialize(NetworkReader reader)
         {
             
@@ -17,6 +19,10 @@ namespace Archipelago.RiskOfRain2.Net
         public void OnReceived()
         {
             ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+            if (OnAllChecksComplete != null)
+            {
+                OnAllChecksComplete();
+            }
         }
 
         public void Serialize(NetworkWriter writer)

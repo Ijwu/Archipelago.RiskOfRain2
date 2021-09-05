@@ -69,8 +69,22 @@ Keep password blank if there is no password on the server.
 Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
 
 ## Changelog
+Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
-**0.1.6**
+**0.2.0**
+
+* Release of all changes from 0.1.5 and onwards.
+* This version purely denotes a release, no new features or fixes were made.
+
+**0.1.7 (Internal Version)**
+
+* Fix bug with objective display being wrong after game re-make.
+* Fix bug with location check progress bar doubling on clients that are not the host. todo
+* Fix bug with location check progress bar not working after reconnect. todo
+* Chat messages from players who are not host now send to the multiworld correctly. (But under the name set in the YAML as it's only one slot for the whole RoR session)
+* Remove location check progress bar from UI when all checks are complete.
+
+**0.1.6 (Internal Version)**
 
 * UI code refactor. Not visible to users, but code is slightly cleaner.
 * Add `archipelago` console command. Syntax: `archipelago <url> <port> <slot> [password]`
@@ -78,7 +92,7 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 * Your existing equipment drops at your feet when you are granted one from the server. The new one swaps into the slot.
 * Add objective tracker for total number of checks remaining.
 
-**0.1.5 (Unreleased)**
+**0.1.5 (Internal Version)**
 
 * Chat messages go out to the multiworld now.
 * Smoke effect now appears when an item drop is turned into a location check as a visual indicator of sending out a check.
@@ -112,9 +126,13 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## Known Issues
 
+* REMOVE DEBUG CODE BEFORE RELEASE
 * If you start a new run but join an existing AP session, you will get spammed with notifications for all your pickups.
-* Reconnect breaks location check UI
-* Reconnect with command seems to break all item grants from AP
+
+* Reconnect breaks location check UI - needs testing esp. for client
+* location bar doubles for client after game re-make
+
+* numerical location bar display?
 
 ## To-do/Ideas
 

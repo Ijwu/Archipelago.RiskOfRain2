@@ -18,11 +18,13 @@ namespace Archipelago.RiskOfRain2.UI
 
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
+        private GameObject container;
 
         public ArchipelagoLocationCheckProgressBarUI()
         {
-            On.RoR2.UI.HUD.Awake += HUD_Awake;
+            Log.LogInfo("ArchipelagoLocationCheckProgressBarUI.ctor()");
             SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
+            On.RoR2.UI.HUD.Awake += HUD_Awake;
         }
 
         private void SyncLocationCheckProgress_LocationSynced(int count, int step)
@@ -39,13 +41,17 @@ namespace Archipelago.RiskOfRain2.UI
 
         public void Dispose()
         {
+            Log.LogInfo("HUD Stuff Dispose()");
             hud = null;
             On.RoR2.UI.HUD.Awake -= HUD_Awake;
             SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
+
+            GameObject.Destroy(container);
         }
 
         private void HUD_Awake(On.RoR2.UI.HUD.orig_Awake orig, HUD self)
         {
+            Log.LogInfo("HUD_Awake()");
             orig(self);
             hud = self;
             PopulateHUD();
@@ -53,6 +59,7 @@ namespace Archipelago.RiskOfRain2.UI
 
         private void PopulateHUD()
         {
+            Log.LogInfo("PopulateHUD()");
             var container = new GameObject("ArchipelagoHUD");
 
             var text = CreateTextLabel();
@@ -71,6 +78,8 @@ namespace Archipelago.RiskOfRain2.UI
             container.transform.ResetScaleAndRotation();
 
             locationCheckBar.canvas.SetColor(new Color(.8f, .5f, 1, 1));
+
+            this.container = container;
         }
 
         private GameObject CreateTextLabel()

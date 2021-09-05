@@ -17,7 +17,8 @@ namespace Archipelago.RiskOfRain2.UI
 
         public void Update()
         {
-            var progressPercent = Mathf.InverseLerp(0, itemPickupStep, currentItemCount);
+            // -1 so that the bar appears full when a check is next.
+            var progressPercent = Mathf.InverseLerp(0, itemPickupStep-1, currentItemCount);
             if (fillRectTransform)
             {
                 fillRectTransform.anchorMin = new Vector2(0f, 0f);

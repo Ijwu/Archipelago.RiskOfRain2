@@ -8,8 +8,10 @@ using BepInEx.Bootstrap;
 using InLobbyConfig.Fields;
 using R2API;
 using R2API.Networking;
+using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
+using RoR2.Networking;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -24,13 +26,14 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "0.1.6";
+        public const string PluginVersion = "0.1.7";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
-        private bool apEnabled = true;
+        private bool willConnectToAP = true;
+        private bool isPlayingAP = false;
         private string apSlotName = "IJ";
         private string apPassword;
 
@@ -42,8 +45,11 @@ namespace Archipelago.RiskOfRain2
             AP.OnClientDisconnect += AP_OnClientDisconnect;
             Run.onRunStartGlobal += Run_onRunStartGlobal;
             Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
-            ArchipelagoStartMessage.OnArchipelagoStart += ArchipelagoStartMessage_ArchipelagoStarted;
+            ArchipelagoStartMessage.OnArchipelagoSessionStart += ArchipelagoStartMessage_OnArchipelagoSessionStart;
+            ArchipelagoEndMessage.OnArchipelagoSessionEnd += ArchipelagoEndMessage_OnArchipelagoSessionEnd;
             ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
+            GameNetworkManager.onStopClientGlobal += GameNetworkManager_onStopClientGlobal;
+            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
@@ -54,11 +60,47 @@ namespace Archipelago.RiskOfRain2
 
             NetworkingAPI.RegisterMessageType<SyncLocationCheckProgress>();
             NetworkingAPI.RegisterMessageType<ArchipelagoStartMessage>();
+            NetworkingAPI.RegisterMessageType<ArchipelagoEndMessage>();
             NetworkingAPI.RegisterMessageType<SyncTotalCheckProgress>();
-            NetworkingAPI.RegisterMessageType<RemoveCheckObjective>();
+            NetworkingAPI.RegisterMessageType<AllChecksComplete>();
+            NetworkingAPI.RegisterMessageType<ArchipelagoChatMessage>();
 
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
             CommandHelper.AddToConsoleWhenReady();
+        }
+
+        private void GameNetworkManager_onStopClientGlobal()
+        {
+            if (!NetworkServer.active && isPlayingAP)
+            {
+                if (AP.LocationCheckBar != null)
+                {
+                    AP.LocationCheckBar.Dispose();
+                }
+            }
+        }
+
+        private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, RoR2.UI.ChatBox self)
+        {
+            if (!NetworkServer.active && isPlayingAP)
+            {
+                new ArchipelagoChatMessage(self.inputField.text).Send(NetworkDestination.Server);
+                self.inputField.text = "";
+                orig(self);
+            }
+        }
+
+        private void ArchipelagoEndMessage_OnArchipelagoSessionEnd()
+        {
+            // This is for clients that are in a lobby but not the host of the lobby.
+            // They end up with multiple bars if they join multiple sessions otherwise.
+            if (!NetworkServer.active && isPlayingAP)
+            {
+                if (AP.LocationCheckBar != null)
+                {
+                    AP.LocationCheckBar.Dispose();
+                }
+            }
         }
 
         private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
@@ -66,7 +108,7 @@ namespace Archipelago.RiskOfRain2
             Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
             ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (apEnabled && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
+            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
             {
                 StartCoroutine(AP.AttemptConnection());
             }
@@ -74,7 +116,8 @@ namespace Archipelago.RiskOfRain2
 
         private void ArchipelagoConsoleCommand_ArchipelagoCommandCalled(string url, int port, string slot, string password)
         {
-            apEnabled = true;
+            willConnectToAP = true;
+            isPlayingAP = true;
             var uri = new UriBuilder();
             uri.Scheme = "ws://";
             uri.Host = url;
@@ -87,19 +130,25 @@ namespace Archipelago.RiskOfRain2
             StartCoroutine(AP.AttemptConnection());
         }
 
-        private void ArchipelagoStartMessage_ArchipelagoStarted()
+        /// <summary>
+        /// Server -> Client packet responder. Should not run on server.
+        /// </summary>
+        private void ArchipelagoStartMessage_OnArchipelagoSessionStart()
         {
             if (!NetworkServer.active)
             {
                 AP.LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
+                isPlayingAP = true;
             }
+            Log.LogInfo($"ArchipelagoStartMessage_OnArchipelagoSessionStart (NetworkServer.Active: {NetworkServer.active}, isPlayingAP: {isPlayingAP})");
         }
 
         private void Run_onRunStartGlobal(Run obj)
         {
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (apEnabled && (isHost || RoR2Application.isInSinglePlayer))
+            if (willConnectToAP && (isHost || RoR2Application.isInSinglePlayer))
             {
+                isPlayingAP = true;
                 var uri = new UriBuilder();
                 uri.Scheme = "ws://";
                 uri.Host = apServerUri;
@@ -108,7 +157,7 @@ namespace Archipelago.RiskOfRain2
                 AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
             }
 
-            if (apEnabled)
+            if (isPlayingAP)
             {
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
             }
@@ -116,7 +165,7 @@ namespace Archipelago.RiskOfRain2
 
         private void Run_onRunDestroyGlobal(Run obj)
         {
-            if (apEnabled)
+            if (isPlayingAP)
             {
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
             }
@@ -132,7 +181,7 @@ namespace Archipelago.RiskOfRain2
                 new StringConfigField("Archipelago Server Password", () => apPassword, (newValue) => apPassword = newValue),
                 new StringConfigField("Archipelago Server URL", () => apServerUri, (newValue) => apServerUri = newValue),
                 new IntConfigField("Archipelago Server Port", () => apServerPort, (newValue) => apServerPort = newValue),
-                new BooleanConfigField("Enable Archipelago?", () => apEnabled, (newValue) => apEnabled = newValue)
+                new BooleanConfigField("Enable Archipelago?", () => willConnectToAP, (newValue) => willConnectToAP = newValue)
             });
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
         }
