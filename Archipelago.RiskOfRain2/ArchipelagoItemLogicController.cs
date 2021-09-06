@@ -244,8 +244,7 @@ namespace Archipelago.RiskOfRain2
                 OnItemDropProcessed(PickedUpItemCount);
             }
 
-            // If finished all checks, don't do HandleItemDrop(), just let the item pickup spawn.
-            if (finishedAllChecks || spawnItem)
+            if (spawnItem)
             {
                 orig(pickupIndex, position, velocity);
             }

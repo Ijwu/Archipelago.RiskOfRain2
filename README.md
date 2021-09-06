@@ -146,3 +146,4 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 * YAML options for scrap drops.
 * Add objectives so that certain number of checks per level required per portal
 * Randomize pickup step every stage or every check?
+* Prevent game over if dios still present in item pool.
