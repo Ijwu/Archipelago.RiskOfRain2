@@ -17,7 +17,10 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void OnReceived()
         {
-            OnArchipelagoSessionEnd();
+            if (OnArchipelagoSessionEnd != null)
+            {
+                OnArchipelagoSessionEnd();
+            }
         }
 
         public void Serialize(NetworkWriter writer)
