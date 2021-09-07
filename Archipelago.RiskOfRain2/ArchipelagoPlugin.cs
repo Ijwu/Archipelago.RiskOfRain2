@@ -140,7 +140,6 @@ namespace Archipelago.RiskOfRain2
                 AP.LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
                 isPlayingAP = true;
             }
-            Log.LogInfo($"ArchipelagoStartMessage_OnArchipelagoSessionStart (NetworkServer.Active: {NetworkServer.active}, isPlayingAP: {isPlayingAP})");
         }
 
         private void Run_onRunStartGlobal(Run obj)
@@ -185,42 +184,5 @@ namespace Archipelago.RiskOfRain2
             });
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
         }
-
-#if DEBUG
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F3))
-            {
-                var teddyBear = PickupCatalog.FindPickupIndex(RoR2Content.Items.Bear.itemIndex);
-                var transform = LocalUserManager.GetFirstLocalUser().cachedBodyObject.transform;
-                PickupDropletController.CreatePickupDroplet(teddyBear, transform.position, transform.forward * 20);
-            }
-            else if (Input.GetKeyDown(KeyCode.F4))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.ExtraLife.itemIndex, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.BossDamageBonus, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.BoostDamage, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.CritGlasses, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.FlatHealth, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.ShinyPearl, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.Bear, 10);
-                player.cachedMaster.inventory.GiveItem(RoR2Content.Items.SprintBonus, 10);
-            }
-            else if (Input.GetKeyDown(KeyCode.F5))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                player.cachedMaster.GiveMoney(500);
-            }
-            else if (Input.GetKeyDown(KeyCode.F6))
-            {
-                RoR2.Run.instance.AdvanceStage(RoR2.Run.instance.nextStageScene);
-            }
-            else if (Input.GetKeyDown(KeyCode.F8))
-            {
-                Log.LogInfo("------- Log Marker ---------");
-            }
-        }
-#endif
     }
 }

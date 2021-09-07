@@ -12,7 +12,6 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void Deserialize(NetworkReader reader)
         {
-            Log.LogInfo("Receiving ArchipelagoEndMessage");
         }
 
         public void OnReceived()
@@ -25,7 +24,6 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void Serialize(NetworkWriter writer)
         {
-            Log.LogInfo("Sending ArchipelagoEndMessage");
         }
     }
 }

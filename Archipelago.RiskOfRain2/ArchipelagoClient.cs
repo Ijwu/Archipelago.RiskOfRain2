@@ -251,6 +251,7 @@ namespace Archipelago.RiskOfRain2
                         var p = packet as ConnectionRefusedPacket;
                         foreach (string err in p.Errors)
                         {
+                            ChatMessage.SendColored(err, Color.red);
                             Log.LogError(err);
                         }
                         break;
@@ -320,7 +321,7 @@ namespace Archipelago.RiskOfRain2
         {
             var acceptableEndings = new[] { RoR2Content.GameEndings.MainEnding, RoR2Content.GameEndings.ObliterationEnding, RoR2Content.GameEndings.LimboEnding};
             var isAcceptableEnding = (acceptableEndings.Contains(gameEndingDef)) || (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "moon2");
-            
+
             // Are we in commencement or have we obliterated?
             if (isAcceptableEnding)
             {
