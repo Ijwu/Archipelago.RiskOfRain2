@@ -100,7 +100,7 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 
 **1.0 (First Stable Release)**
 
-* Release of all changes from 0.1.5 and onwards.
+* Release of all changes from 0.1.5 up to 0.1.7.
 * This version purely denotes a release, no new features or fixes were made.
 
 **0.1.7 (Internal Version)**
