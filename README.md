@@ -128,16 +128,14 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 ## Known Issues
 
 * REMOVE DEBUG CODE BEFORE RELEASE
+* Splitscreen support is unlikely at the moment. It might work, it might not.
 * If you start a new run but join an existing AP session, you will get spammed with notifications for all your pickups.
+* Reconnect breaks location check progress bar.
 
-* Reconnect breaks location check UI - needs testing esp. for client
-* location bar doubles for client after game re-make
-
-* numerical location bar display?
 
 ## To-do/Ideas
 
-* Cache and load data package from file system. - should probably go in packet lib
+* Cache and load data package from file system.
 * Further randomization in some way. Mob spawns, elite types, variance api, boss types, mob families, mobs with items, etc.
 * More item/reward types: money, exp, warbanner drops, drones
 * Funny/joke item types: launching you into the air, switch left and right click
