@@ -71,15 +71,16 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
-**0.2.0**
+**1.0 (First Stable Release)**
 
 * Release of all changes from 0.1.5 and onwards.
 * This version purely denotes a release, no new features or fixes were made.
 
 **0.1.7 (Internal Version)**
 
+* Allow for obliteration or fealty endings to work as AP session completion events. You don't _have_ to go to commencement anymore.
 * Fix bug with objective display being wrong after game re-make.
-* Fix bug with location check progress bar doubling on clients that are not the host. todo
+* Fix bug with location check progress bar doubling on clients that are not the host.
 * Fix bug with location check progress bar not working after reconnect. todo
 * Chat messages from players who are not host now send to the multiworld correctly. (But under the name set in the YAML as it's only one slot for the whole RoR session)
 * Remove location check progress bar from UI when all checks are complete.
