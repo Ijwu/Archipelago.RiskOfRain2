@@ -26,7 +26,7 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "0.1.7";
+        public const string PluginVersion = "1.0";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
@@ -34,7 +34,7 @@ namespace Archipelago.RiskOfRain2
         private int apServerPort = 38281;
         private bool willConnectToAP = true;
         private bool isPlayingAP = false;
-        private string apSlotName = "IJ";
+        private string apSlotName;
         private string apPassword;
 
         public void Awake()
