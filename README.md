@@ -154,7 +154,6 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 
 ## Known Issues
 
-* REMOVE DEBUG CODE BEFORE RELEASE
 * Splitscreen support is unlikely at the moment. It might work, it might not.
 * If you start a new run but join an existing AP session, you will get spammed with notifications for all your pickups.
 * Reconnect breaks location check progress bar.
