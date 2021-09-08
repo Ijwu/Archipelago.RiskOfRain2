@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
-using Archipelago.RiskOfRain2;
-using Archipelago.RiskOfRain2.Extensions;
-using R2API;
+using Archipelago.RiskOfRain2.Net;
+using Archipelago.RiskOfRain2.UI;
+using R2API.Networking;
+using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
 using RoR2.UI;
@@ -17,34 +18,53 @@ using UnityEngine;
 namespace Archipelago.RiskOfRain2
 {
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
-    public class ArchipelagoClient
+    public class ArchipelagoClient : IDisposable
     {
-        private ArchipelagoSession session;
+        // Making this static is dirty, I know. But this is gamedev. Gamedev is a cesspool and you know it.
+        public static bool RecentlyReconnected = false;
 
-        private DataPackagePacket dataPackagePacket;
-        private ConnectedPacket connectedPacket;
-        private LocationInfoPacket locationInfoPacket;
-        private ConnectPacket connectPacket;
+        public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
+        public event ClientDisconnected OnClientDisconnect;
 
-        private Dictionary<int, string> itemLookupById;
-        private Dictionary<int, string> locationLookupById;
-        private Dictionary<int, string> playerNameById;
-        private int pickedUpItemCount = 0;
-
-        private Queue<string> itemReceivedQueue = new Queue<string>();
-        private int itemPickupStep = 5;
-        private int totalLocations;
-        private bool finishedAllChecks = false;
-        private ulong seed;
-        private string lastServerUrl;
-
-        private bool IsInGame 
-        { 
+        public string LastServerUrl { get; set; }
+        public string SlotName
+        {
             get
             {
-                return (RoR2Application.isInSinglePlayer || RoR2Application.isInMultiPlayer) && RoR2.Run.instance != null;
-            } 
+                return connectPacket.Name;
+            }
+
+            set
+            {
+                connectPacket.Name = value;
+            }
         }
+    
+        public string Password
+        {
+            get
+            {
+                return connectPacket.Password;
+            }
+
+            set
+            {
+                connectPacket.Password = value;
+            }
+        }
+
+        public ArchipelagoItemLogicController ItemLogic;
+        public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
+
+        private ArchipelagoSession session;
+        private DataPackagePacket dataPackagePacket;
+        private ConnectedPacket connectedPacket;
+        private ConnectPacket connectPacket;
+
+        private Dictionary<int, string> playerNameById;        
+        private ulong seed;
+        
+        private bool reconnecting = false;
 
         public ArchipelagoClient()
         {
@@ -56,92 +76,53 @@ namespace Archipelago.RiskOfRain2
             connectPacket.Tags = new List<string> { "AP" };
         }
 
-        public void ResetItemReceivedCount()
+        public void Connect(string url, string slotName, string password = null)
         {
-            pickedUpItemCount = 0;
+            Dispose();
+
+            connectPacket.Name = slotName;
+            connectPacket.Password = password;
+            LastServerUrl = url;
+
+            session = new ArchipelagoSession(url);
+            ItemLogic = new ArchipelagoItemLogicController(session);
+            LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
+
+            session.ConnectAsync();
+
+            session.PacketReceived += Session_PacketReceived;
+            session.SocketClosed += Session_SocketClosed;
+            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
+
+            if (reconnecting)
+            {
+                return;
+            }
+
+            HookGame();
+            new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
         }
 
-        public void Connect(string url, string slotName, string password = null)
+        public void Dispose()
         {
             if (session != null && session.Connected)
             {
                 session.Disconnect();
             }
-
-            connectPacket.Name = slotName;
-            connectPacket.Password = password;
-
-            lastServerUrl = url;
-            session = new ArchipelagoSession(url);
-            session.ConnectAsync();
-            session.PacketReceived += Session_PacketReceived;
-            session.SocketClosed += Session_SocketClosed;
-
-            On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
-            RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
-            On.RoR2.RoR2Application.Update += RoR2Application_Update;
-            On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
-        }
-
-        private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
-        {
-            if (e.WasClean)
+            
+            if (ItemLogic != null)
             {
-                return;
+                ItemLogic.OnItemDropProcessed -= ItemLogicHandler_ItemDropProcessed;
+                ItemLogic.Dispose();
             }
-
-            // Clean up
-            On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
-            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
-            On.RoR2.RoR2Application.Update -= RoR2Application_Update;
-            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
-
-            //TODO: improve reconnect logic. immediate reconnect is nearly useless.
-
-            // Reconnect
-            session = new ArchipelagoSession(lastServerUrl);
-            session.ConnectAsync();
-            session.PacketReceived += Session_PacketReceived;
-            session.SocketClosed += Session_SocketClosed;
-        }
-
-        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
-        {
-            // TODO: prevent game over if more dio's can be incoming
-
-            // Are we in commencement?
-            if (Stage.instance.sceneDef.baseSceneName == "moon2")
+            
+            if (LocationCheckBar != null)
             {
-                var packet = new StatusUpdatePacket();
-                packet.Status = ArchipelagoClientState.ClientGoal;
-                session.SendPacket(packet);
+                LocationCheckBar.Dispose();
             }
-            orig(self, gameEndingDef);
-        }
-
-        private void Run_onRunDestroyGlobal(Run obj)
-        {
-            if (session.Connected)
-            {
-                session.Disconnect();
-            }
-
-            On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
-            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
-            On.RoR2.RoR2Application.Update -= RoR2Application_Update;
-            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
-
+         
+            UnhookGame();
             session = null;
-        }
-
-        private void RoR2Application_Update(On.RoR2.RoR2Application.orig_Update orig, RoR2Application self)
-        {
-            if (IsInGame && itemReceivedQueue.Any())
-            {
-                HandleReceivedItemQueueItem();
-            }
-
-            orig(self);
         }
 
         private void UpdatePlayerList(List<NetworkPlayer> players)
@@ -155,6 +136,105 @@ namespace Archipelago.RiskOfRain2
             {
                 playerNameById[player.Slot] = player.Name;
             }
+        }
+        private void HookGame()
+        {
+            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
+            RoR2.Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
+            On.RoR2.Run.BeginGameOver += Run_BeginGameOver;
+            ArchipelagoChatMessage.OnChatReceivedFromClient += ArchipelagoChatMessage_OnChatReceivedFromClient;
+        }
+
+        private void UnhookGame()
+        {
+            On.RoR2.UI.ChatBox.SubmitChat -= ChatBox_SubmitChat;
+            RoR2.Run.onRunDestroyGlobal -= Run_onRunDestroyGlobal;
+            On.RoR2.Run.BeginGameOver -= Run_BeginGameOver;
+            ArchipelagoChatMessage.OnChatReceivedFromClient -= ArchipelagoChatMessage_OnChatReceivedFromClient;
+        }
+
+        private void ArchipelagoChatMessage_OnChatReceivedFromClient(string message)
+        {
+            if (session.Connected && !string.IsNullOrEmpty(message))
+            {
+                var sayPacket = new SayPacket();
+                sayPacket.Text = message;
+                session.SendPacket(sayPacket);
+            }
+        }
+
+        private void ItemLogicHandler_ItemDropProcessed(int pickedUpCount)
+        {
+            if (LocationCheckBar != null)
+            {
+                LocationCheckBar.CurrentItemCount = pickedUpCount;
+                if ((LocationCheckBar.CurrentItemCount % ItemLogic.ItemPickupStep) == 0)
+                {
+                    LocationCheckBar.CurrentItemCount = 0;
+                }
+                else
+                {
+                    LocationCheckBar.CurrentItemCount = LocationCheckBar.CurrentItemCount % ItemLogic.ItemPickupStep;
+                }
+            }
+            new SyncLocationCheckProgress(LocationCheckBar.CurrentItemCount, LocationCheckBar.ItemPickupStep).Send(NetworkDestination.Clients);
+        }
+
+        private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, ChatBox self)
+        {
+            var text = self.inputField.text;
+            if (session.Connected && !string.IsNullOrEmpty(text))
+            {
+                var sayPacket = new SayPacket();
+                sayPacket.Text = text;
+                session.SendPacket(sayPacket);
+
+                self.inputField.text = string.Empty;
+                orig(self);
+            }
+            else
+            {
+                orig(self);
+            }
+        }
+
+        private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        {
+            Dispose();
+            new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
+
+            if (OnClientDisconnect != null)
+            {
+                OnClientDisconnect(e.Code, e.Reason, e.WasClean);
+            }
+        }
+
+        public IEnumerator AttemptConnection()
+        {
+            reconnecting = true;
+            var retryCounter = 0;
+
+            while ((session == null || !session.Connected)&& retryCounter < 5)
+            {
+                ChatMessage.Send($"Connection attempt #{retryCounter+1}");
+                retryCounter++;
+                yield return new WaitForSeconds(3f);
+                Connect(LastServerUrl, connectPacket.Name, connectPacket.Password);
+            }
+
+            if (session == null || !session.Connected)
+            {
+                ChatMessage.SendColored("Could not connect to Archipelago.", Color.red);
+                Dispose();
+            }
+            else if (session != null && session.Connected)
+            {
+                ChatMessage.SendColored("Established Archipelago connection.", Color.green);
+                new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
+            }
+
+            reconnecting = false;
+            RecentlyReconnected = true;
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
@@ -171,6 +251,7 @@ namespace Archipelago.RiskOfRain2
                         var p = packet as ConnectionRefusedPacket;
                         foreach (string err in p.Errors)
                         {
+                            ChatMessage.SendColored(err, Color.red);
                             Log.LogError(err);
                         }
                         break;
@@ -179,53 +260,24 @@ namespace Archipelago.RiskOfRain2
                     {
                         connectedPacket = packet as ConnectedPacket;
                         UpdatePlayerList(connectedPacket.Players);
-
-                        // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
-                        itemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-                        totalLocations = Convert.ToInt32(connectedPacket.SlotData["totalLocations"]);
+                        LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
 
                         //TODO: perhaps fix seed setting
                         seed = Convert.ToUInt64(connectedPacket.SlotData["seed"]);
-
-                        // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
-                        // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
-                        pickedUpItemCount = connectedPacket.ItemsChecked.Count * itemPickupStep;
-
-                        On.RoR2.Run.Start += (orig, instance) => { instance.seed = seed; orig(instance); };
-
-                        break;
-                    }
-                case ArchipelagoPacketType.ReceivedItems:
-                    {
-                        var p = packet as ReceivedItemsPacket;
-                        foreach (var newItem in p.Items)
-                        {
-                            var itemName = itemLookupById[newItem.Item];
-                            itemReceivedQueue.Enqueue(itemName);
-                        }
-                        break;
-                    }
-                case ArchipelagoPacketType.LocationInfo:
-                    {
-                        locationInfoPacket = packet as LocationInfoPacket;
-                        break;
-                    }
-                case ArchipelagoPacketType.RoomUpdate:
-                    {
-                        var p = packet as RoomUpdatePacket;
+                        //On.RoR2.Run.Start += (orig, instance) => { instance.seed = seed; orig(instance); };
                         break;
                     }
                 case ArchipelagoPacketType.Print:
                     {
-                        var p = packet as PrintPacket;
-                        ChatMessage.Send(p.Text);
+                        var printPacket = packet as PrintPacket;
+                        ChatMessage.Send(printPacket.Text);
                         break;
                     }
                 case ArchipelagoPacketType.PrintJSON:
                     {
-                        var p = packet as PrintJsonPacket;
+                        var printJsonPacket = packet as PrintJsonPacket;
                         string text = "";
-                        foreach (var part in p.Data)
+                        foreach (var part in printJsonPacket.Data)
                         {
                             switch (part.Type)
                             {
@@ -260,134 +312,31 @@ namespace Archipelago.RiskOfRain2
                 case ArchipelagoPacketType.DataPackage:
                     {
                         dataPackagePacket = packet as DataPackagePacket;
-
-                        itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
-                        locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
-
                         session.SendPacket(connectPacket);
                         break;
                     }
             }
         }
-
-        private void HandleReceivedItemQueueItem()
+        private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
-            string itemReceived = itemReceivedQueue.Dequeue();
+            var acceptableEndings = new[] { RoR2Content.GameEndings.MainEnding, RoR2Content.GameEndings.ObliterationEnding, RoR2Content.GameEndings.LimboEnding};
+            var isAcceptableEnding = (acceptableEndings.Contains(gameEndingDef)) || (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "moon2");
 
-            switch (itemReceived)
+            // Are we in commencement or have we obliterated?
+            if (isAcceptableEnding)
             {
-                case "Common Item":
-                    var common = Run.instance.availableTier1DropList.Choice();
-                    GiveItemToPlayers(common);
-                    break;
-                case "Uncommon Item":
-                    var uncommon = Run.instance.availableTier2DropList.Choice();
-                    GiveItemToPlayers(uncommon);
-                    break;
-                case "Legendary Item":
-                    var legendary = Run.instance.availableTier3DropList.Choice();
-                    GiveItemToPlayers(legendary);
-                    break;
-                case "Boss Item":
-                    var boss = Run.instance.availableBossDropList.Choice();
-                    GiveItemToPlayers(boss);
-                    break;
-                case "Lunar Item":
-                    var lunar = Run.instance.availableLunarDropList.Choice();
-                    GiveItemToPlayers(lunar);
-                    break;
-                case "Equipment":
-                    var equipment = Run.instance.availableEquipmentDropList.Choice();
-                    GiveEquipmentToPlayers(equipment);
-                    break;
-                case "Item Scrap, White":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapWhite.itemIndex));
-                    break;
-                case "Item Scrap, Green":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapGreen.itemIndex));
-                    break;
-                case "Item Scrap, Red":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapRed.itemIndex));
-                    break;
-                case "Item Scrap, Yellow":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapYellow.itemIndex));
-                    break;
-                case "Dio's Best Friend":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ExtraLife.itemIndex));
-                    break;
-            }
-        }
-
-        private void GiveEquipmentToPlayers(PickupIndex pickupIndex)
-        {
-            foreach (var player in PlayerCharacterMasterController.instances)
-            {
-                var inventory = player.master.inventory;
-                inventory.SetEquipmentIndex(PickupCatalog.GetPickupDef(pickupIndex)?.equipmentIndex ?? EquipmentIndex.None);
-                DisplayPickupNotification(pickupIndex);
-            }
-        }
-
-        private void GiveItemToPlayers(PickupIndex pickupIndex)
-        {
-            foreach (var player in PlayerCharacterMasterController.instances)
-            {
-                var inventory = player.master.inventory;
-                inventory.GiveItem(PickupCatalog.GetPickupDef(pickupIndex)?.itemIndex ?? ItemIndex.None);
-                DisplayPickupNotification(pickupIndex);
-            }
-        }
-
-        private void DisplayPickupNotification(PickupIndex index)
-        {
-            // Dunno any better so hit every queue there is.
-            foreach (var queue in NotificationQueue.readOnlyInstancesList)
-            {
-                foreach (var player in PlayerCharacterMasterController.instances)
-                {
-                    queue.OnPickup(player.master, index);
-                }
-            }
-        }
-
-        private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
-        {
-            // If finished all checks, don't do HandleItemDrop(), just let the item pickup spawn.
-            if (finishedAllChecks || HandleItemDrop())
-            {
-                orig(pickupIndex, position, velocity);
-            }
-        }
-
-        private bool HandleItemDrop()
-        {
-            pickedUpItemCount += 1;
-
-            if ((pickedUpItemCount % itemPickupStep) == 0)
-            {
-                var itemSendIndex = pickedUpItemCount / itemPickupStep;
-
-                if (itemSendIndex > totalLocations)
-                {
-                    finishedAllChecks = true;
-                    return true;
-                }
-
-                var itemSendName = $"ItemPickup{itemSendIndex}";
-                var itemLocationId = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup[itemSendName];
-
-                connectedPacket.ItemsChecked.Add(itemLocationId);
-                connectedPacket.MissingChecks.Remove(itemLocationId);
-
-                var packet = new LocationChecksPacket();
-                packet.Locations = new List<int> { itemLocationId };
-
+                var packet = new StatusUpdatePacket();
+                packet.Status = ArchipelagoClientState.ClientGoal;
                 session.SendPacket(packet);
 
-                return false;
+                new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
             }
+            orig(self, gameEndingDef);
+        }
 
-            return true;
+        private void Run_onRunDestroyGlobal(Run obj)
+        {
+            Dispose();
         }
     }
 }
