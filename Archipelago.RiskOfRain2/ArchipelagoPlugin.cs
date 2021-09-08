@@ -26,7 +26,7 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "1.0";
+        public const string PluginVersion = "1.0.1";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
@@ -65,7 +65,6 @@ namespace Archipelago.RiskOfRain2
             NetworkingAPI.RegisterMessageType<AllChecksComplete>();
             NetworkingAPI.RegisterMessageType<ArchipelagoChatMessage>();
 
-            On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
             CommandHelper.AddToConsoleWhenReady();
         }
 
@@ -86,6 +85,10 @@ namespace Archipelago.RiskOfRain2
             {
                 new ArchipelagoChatMessage(self.inputField.text).Send(NetworkDestination.Server);
                 self.inputField.text = "";
+                orig(self);
+            }
+            else
+            {
                 orig(self);
             }
         }
