@@ -6,7 +6,7 @@ Should be multiplayer compatible, but not rigorously tested. Be sure to scale up
 
 ## Gameplay 
 
-The Risk of Rain 2 players send checks by causing items to spawn in-game. That means opening chests or killing bosses, generally. 
+The Risk of Rain 2 players send checks by causing items to spawn in-game. Currently this includes opening chests, defeating bosses, using scrappers and 3d printers, opening lunar pods, and accessing terminals. 
 An item check is only sent out after a certain number of items are picked up. This count is configurable in the player's YAML.
 
 ### Achieving Victory or Defeat
@@ -85,7 +85,7 @@ The player will have the default preset generated item pool with the custom item
 
 ## Connecting to an Archipelago Server
 
-I assume you already have an Archipelago server running. Instructions on how to run a server are available on https://archipelago.gg.
+I assume you already have an Archipelago server running. Instructions on how to run a server are available on https://archipelago.gg:48484.
 
 There will be a menu button on the right side of the screen. Click it in order to bring up the in lobby mod config. From here you can expand the Archipelago sections and fill in the relevant info.
 
@@ -93,7 +93,7 @@ Keep password blank if there is no password on the server.
 
 ![In Lobby UI Example](./docs/img/inlobbyui.png)
 
-Simply check `Enable Archipelago?` and when you start the run it will automatically connect.
+Simply check `Enable Archipelago?` and when you start the run it will automatically connect and print a message stating successful connection in your in-game chat.
 
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
