@@ -2,17 +2,16 @@
 
 This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg or join our Discord.
 
-Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. At the moment, all players require the mod in multiplayer.
+Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. All players require the mod in multiplayer.
 
 ## Gameplay 
 
-The Risk of Rain 2 players send checks by causing items to spawn in-game. Currently this includes opening chests, defeating bosses, using scrappers and 3d printers, opening lunar pods, and accessing terminals. 
+The Risk of Rain 2 players send checks by causing items to spawn in-game. Currently this includes opening chests, defeating bosses, using scrappers and 3D printers, opening lunar pods, and accessing terminals. 
 An item check is only sent out after a certain number of items are picked up. This count is configurable in the player's YAML.
 
 ### Achieving Victory or Defeat
 
-Achieving victory is defined as beating Mithrix or being defeated during Commencement. Obliterating is NOT supported at this time. You are NOT expected to revisit the planet
-through the primordial teleporter but you MAY do so. However, remember that victory can only be achieved in Commencement, so you'll be locking yourself in for another 5 levels.
+Achieving victory is defined as beating Mithrix, losing in commencement, or obliterating.
 
 Due to the nature of roguelike games, you can possibly die and lose your place completely. This is mitigated partly by the free grants of `Dio's Best Friend`
 but it is still possible to lose. If you do lose, you can reconnect to the Archipelago server and start a new run. The server will send you the items you have
@@ -176,7 +175,6 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 * Trap item types: spawn a family of mobs on you, spawn bosses, drop bombs on the stage
 * Randomize order of check sending.
 * YAML options for types of item drops? Chests/Scrapper/Multishop/Boss/LunarCoin/GoldChests
-* YAML options for scrap drops.
 * Add objectives so that certain number of checks per level required per portal
 * Randomize pickup step every stage or every check?
 * Prevent game over if dios still present in item pool.
