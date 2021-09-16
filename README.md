@@ -98,6 +98,14 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
+**1.0.1**
+
+* Fix chat box getting stuck on enabled sometimes.
+* Stop lunar coins, elite drops, artifacts, and artifact keys from counting towards location checks.
+    * Enables going to Bulwark's Ambry while you have location checks left.
+* Names not appearing in multiplayer fixed.
+* Fix lunar equipment grants not previously working.
+
 **1.0 (First Stable Release)**
 
 * Release of all changes from 0.1.5 up to 0.1.7.
