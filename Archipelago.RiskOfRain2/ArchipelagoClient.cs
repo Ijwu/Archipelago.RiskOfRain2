@@ -72,7 +72,7 @@ namespace Archipelago.RiskOfRain2
 
             connectPacket.Game = "Risk of Rain 2";
             connectPacket.Uuid = Guid.NewGuid().ToString();
-            connectPacket.Version = new Version(0, 1, 0);
+            connectPacket.Version = new Version(0, 1, 9);
             connectPacket.Tags = new List<string> { "AP" };
         }
 
