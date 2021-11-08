@@ -84,7 +84,7 @@ The player will have the default preset generated item pool with the custom item
 
 ## Connecting to an Archipelago Server
 
-I assume you already have an Archipelago server running. Instructions on how to run a server are available on https://archipelago.gg:48484.
+I assume you already have an Archipelago server running. Instructions on how to run a server are available on https://archipelago.gg.
 
 There will be a menu button on the right side of the screen. Click it in order to bring up the in lobby mod config. From here you can expand the Archipelago sections and fill in the relevant info.
 
