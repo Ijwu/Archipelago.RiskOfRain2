@@ -8,12 +8,14 @@ namespace Archipelago.RiskOfRain2.Net
 {
     public class ArchipelagoChatMessage : INetMessage
     {
-        public static event Action<string> OnChatReceivedFromClient;
+        public static event Action<string, string> OnChatReceivedFromClient;
 
+        string author;
         string message;
 
-        public ArchipelagoChatMessage(string message)
+        public ArchipelagoChatMessage(string author, string message)
         {
+            this.author = author;
             this.message = message;
         }
 
@@ -24,6 +26,7 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void Deserialize(NetworkReader reader)
         {
+            author = reader.ReadString();
             message = reader.ReadString();
         }
 
@@ -31,12 +34,13 @@ namespace Archipelago.RiskOfRain2.Net
         {
             if (OnChatReceivedFromClient != null)
             {
-                OnChatReceivedFromClient(message);
+                OnChatReceivedFromClient(author, message);
             }
         }
 
         public void Serialize(NetworkWriter writer)
         {
+            writer.Write(author);
             writer.Write(message);
         }
     }

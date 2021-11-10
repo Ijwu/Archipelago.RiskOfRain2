@@ -6,7 +6,7 @@ using R2API.Utils;
 using RoR2.UI;
 using static RoR2.UI.ObjectivePanelController;
 
-namespace Archipelago.RiskOfRain2.UI
+namespace Archipelago.RiskOfRain2.UI.Objectives
 {
     public class ArchipelagoTotalChecksObjectiveController
     {
@@ -25,7 +25,7 @@ namespace Archipelago.RiskOfRain2.UI
 
         static ArchipelagoTotalChecksObjectiveController()
         {
-            ObjectivePanelController.collectObjectiveSources += ObjectivePanelController_collectObjectiveSources;
+            collectObjectiveSources += ObjectivePanelController_collectObjectiveSources;
         }
 
         private static void ObjectivePanelController_collectObjectiveSources(RoR2.CharacterMaster arg1, List<ObjectiveSourceDescriptor> arg2)

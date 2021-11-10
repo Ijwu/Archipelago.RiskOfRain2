@@ -7,7 +7,7 @@ using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Extensions;
 using Archipelago.RiskOfRain2.Net;
-using Archipelago.RiskOfRain2.UI;
+using Archipelago.RiskOfRain2.UI.Objectives;
 using R2API;
 using R2API.Networking;
 using R2API.Networking.Interfaces;

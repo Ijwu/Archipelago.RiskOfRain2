@@ -12,9 +12,9 @@ namespace Archipelago.RiskOfRain2.Console
         public static event ArchipelagoConsoleCommandHandler OnArchipelagoCommandCalled;
 
         [ConCommand(
-    commandName = "archipelago",
-    flags = ConVarFlags.SenderMustBeServer,
-    helpText = "Connects to Archipelago. Syntax: archipelago <url> <port> <slot> [password]")]
+            commandName = "archipelago",
+            flags = ConVarFlags.SenderMustBeServer,
+            helpText = "Connects to Archipelago. Syntax: archipelago <url> <port> <slot> [password]")]
         private static void ArchipelagoConCommand(ConCommandArgs args)
         {
             if (args.Count < 3 || args.Count > 4)

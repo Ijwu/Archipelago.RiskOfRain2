@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Archipelago.RiskOfRain2.Console;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI;
+using Archipelago.RiskOfRain2.UI.Objectives;
 using BepInEx;
 using BepInEx.Bootstrap;
 using InLobbyConfig.Fields;
@@ -32,7 +33,7 @@ namespace Archipelago.RiskOfRain2
         private bool isInLobbyConfigLoaded = false;
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
-        private bool willConnectToAP = true;
+        private bool willConnectToAP = false;
         private bool isPlayingAP = false;
         private string apSlotName;
         private string apPassword;
@@ -72,10 +73,7 @@ namespace Archipelago.RiskOfRain2
         {
             if (!NetworkServer.active && isPlayingAP)
             {
-                if (AP.LocationCheckBar != null)
-                {
-                    AP.LocationCheckBar.Dispose();
-                }
+                //TODO: Disable UI Modules here.
             }
         }
 
@@ -83,7 +81,7 @@ namespace Archipelago.RiskOfRain2
         {
             if (!NetworkServer.active && isPlayingAP)
             {
-                new ArchipelagoChatMessage(self.inputField.text).Send(NetworkDestination.Server);
+                new ArchipelagoChatMessage(PlayerCharacterMasterController.instances[0].GetDisplayName(), self.inputField.text).Send(NetworkDestination.Server);
                 self.inputField.text = "";
                 orig(self);
             }
@@ -99,10 +97,7 @@ namespace Archipelago.RiskOfRain2
             // They end up with multiple bars if they join multiple sessions otherwise.
             if (!NetworkServer.active && isPlayingAP)
             {
-                if (AP.LocationCheckBar != null)
-                {
-                    AP.LocationCheckBar.Dispose();
-                }
+                //TODO: disable UI modules
             }
         }
 
