@@ -10,6 +10,7 @@ using R2API.Utils;
 using RoR2;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
@@ -43,7 +44,11 @@ namespace Archipelago.RiskOfRain2
                 tags.Add("DeathLink");
             }
 
-            Session.AttemptConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password);
+            if (!Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password))
+            {
+                ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
+                return;
+            }
 
             if (enableDeathLink)
             {
@@ -54,18 +59,13 @@ namespace Archipelago.RiskOfRain2
             Locations.Hook();
             UI.Hook();
 
-            if (Session.Socket.Connected)
-            {
-                ChatMessage.SendColored($"Succesfully connected to Archipelago at {hostname}:{port} for slot {slotName}.", Color.green);
-            }
-            else
-            {
-                ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
-            }
+            ChatMessage.SendColored($"Succesfully connected to Archipelago at {hostname}:{port} for slot {slotName}.", Color.green);
         }
 
         public void Disconnect()
         {
+            Session.Socket.SocketClosed -= Socket_SocketClosed;
+            Session.Socket.PacketReceived -= Socket_PacketReceived;
             Session.Socket.DisconnectAsync();
         }
 
