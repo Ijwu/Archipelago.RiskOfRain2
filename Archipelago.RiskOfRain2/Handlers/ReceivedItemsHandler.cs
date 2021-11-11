@@ -4,7 +4,7 @@ using RoR2;
 using RoR2.UI;
 using UnityEngine;
 
-namespace Archipelago.RiskOfRain2
+namespace Archipelago.RiskOfRain2.Handlers
 {
     internal class ReceivedItemsHandler : IHandleSomething
     {

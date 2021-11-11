@@ -1,4 +1,4 @@
-﻿namespace Archipelago.RiskOfRain2
+﻿namespace Archipelago.RiskOfRain2.Handlers
 {
     internal interface IHandleSomething
     {

@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace Archipelago.RiskOfRain2.UI
 {
-    public class ArchipelagoLocationCheckProgressBarUI : IUIModule
+    internal class ArchipelagoLocationCheckProgressBarUI : IUIModule
     {
         public int ItemPickupStep { get; set; }
         public int CurrentItemCount { get; set; }
@@ -19,11 +19,6 @@ namespace Archipelago.RiskOfRain2.UI
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
         private GameObject container;
-
-        public ArchipelagoLocationCheckProgressBarUI()
-        {
-            SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
-        }
 
         private void SyncLocationCheckProgress_LocationSynced(int count, int step)
         {
@@ -37,6 +32,23 @@ namespace Archipelago.RiskOfRain2.UI
             }
         }
 
+        public void Enable(HUD hud, ArchipelagoClient2 client)
+        {
+            this.hud = hud;
+            SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
+            ItemPickupStep = client.Locations.ItemPickupStep;
+            CurrentItemCount = client.Locations.CurrentChecks * ItemPickupStep;
+            client.Locations.OnItemDropProcessed += Locations_OnItemDropProcessed;
+
+            BuildUI(client.AccentColor);
+        }
+
+        private void Locations_OnItemDropProcessed(int pickedUpCount)
+        {
+            CurrentItemCount = pickedUpCount;
+            locationCheckBar.currentItemCount = CurrentItemCount;
+        }
+
         public void Disable()
         {
             hud = null;
@@ -45,9 +57,8 @@ namespace Archipelago.RiskOfRain2.UI
             GameObject.Destroy(container);
         }
 
-        public void Enable(HUD hud)
+        private void BuildUI(Color accent)
         {
-            this.hud = hud;
             var container = new GameObject("ArchipelagoHUD");
 
             var text = CreateTextLabel();
@@ -65,7 +76,7 @@ namespace Archipelago.RiskOfRain2.UI
             rectTransform.anchoredPosition = Vector2.zero;
             container.transform.ResetScaleAndRotation();
 
-            locationCheckBar.canvas.SetColor(new Color(.8f, .5f, 1, 1));
+            locationCheckBar.canvas.SetColor(accent);
 
             this.container = container;
         }

@@ -9,7 +9,7 @@ using RoR2;
 using System.Linq;
 using UnityEngine;
 
-namespace Archipelago.RiskOfRain2
+namespace Archipelago.RiskOfRain2.Handlers
 {
     internal class LocationChecksHandler : IHandleSomething
     {
@@ -17,6 +17,9 @@ namespace Archipelago.RiskOfRain2
         private GameObject smokescreenPrefab;
         private PickupIndex[] skippedItems;
         private bool finishedAllChecks;
+
+        public delegate void ItemDropProcessedHandler(int pickedUpCount);
+        public event ItemDropProcessedHandler OnItemDropProcessed;
 
         public int TotalChecks { get; private set; }
         public int CurrentChecks { get; private set; }
@@ -26,8 +29,8 @@ namespace Archipelago.RiskOfRain2
         public LocationChecksHandler(LocationCheckHelper helper)
         {
             this.helper = helper;
-            smokescreenPrefab = Resources.Load<GameObject>("Prefabs/Effects/SmokescreenEffect").InstantiateClone("LocationCheckPoof", true);
 
+            smokescreenPrefab = Resources.Load<GameObject>("Prefabs/Effects/SmokescreenEffect").InstantiateClone("LocationCheckPoof", true);
             skippedItems = new PickupIndex[]
             {
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixBlue.equipmentIndex),
@@ -60,6 +63,19 @@ namespace Archipelago.RiskOfRain2
             };
         }
 
+        public void SetCheckCounts(int totalChecks, int pickupStep, int currentChecks)
+        {
+            TotalChecks = totalChecks;
+            ItemPickupStep = pickupStep;
+            CurrentChecks = currentChecks;
+            PickedUpItemCount = currentChecks * pickupStep;
+
+            ArchipelagoTotalChecksObjectiveController.CurrentChecks = currentChecks;
+            ArchipelagoTotalChecksObjectiveController.TotalChecks = totalChecks;
+
+            Log.LogDebug($"TotalChecks: {totalChecks} PickupStep: {pickupStep} CurrentChecks: {currentChecks}");
+        }
+
         public void Hook()
         {
             On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
@@ -78,8 +94,7 @@ namespace Archipelago.RiskOfRain2
                 return;
             }
 
-            // Run `HandleItemDrop()` first so that the `PickedUpItemCount` is incremented by the time `ItemDropProcessed()` is called.
-            var spawnItem = HandleItemDrop();
+            var spawnItem = finishedAllChecks || HandleItemDrop();
 
             if (spawnItem)
             {
@@ -88,7 +103,12 @@ namespace Archipelago.RiskOfRain2
 
             if (!spawnItem)
             {
-                EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() { origin = position }, true);
+                EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() {color = new Color(.8f, .5f, 1, 1), origin = position }, true);
+            }
+
+            if (OnItemDropProcessed != null)
+            {
+                OnItemDropProcessed(PickedUpItemCount);
             }
 
             new SyncTotalCheckProgress(finishedAllChecks ? TotalChecks : CurrentChecks, TotalChecks).Send(NetworkDestination.Clients);
@@ -102,11 +122,13 @@ namespace Archipelago.RiskOfRain2
 
         private bool HandleItemDrop()
         {
+            Log.LogDebug($"PickedUpItemCount Before: {PickedUpItemCount}");
             PickedUpItemCount += 1;
 
-            if ((PickedUpItemCount % ItemPickupStep) == 0)
+            if (PickedUpItemCount % ItemPickupStep == 0)
             {
                 CurrentChecks = PickedUpItemCount / ItemPickupStep;
+                Log.LogDebug($"Detected current check count: {CurrentChecks}");
 
                 ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
 
@@ -118,7 +140,7 @@ namespace Archipelago.RiskOfRain2
 
                 //TODO: prepopulate item send list and allow randomization
                 var itemSendName = $"ItemPickup{CurrentChecks}";
-                var itemLocationId = helper.GetLocationIdFromName(itemSendName);
+                var itemLocationId = helper.GetLocationIdFromName(ArchipelagoPlugin.GameName, itemSendName);
                 Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");
 
                 helper.CompleteLocationChecks(itemLocationId);

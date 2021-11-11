@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Archipelago.RiskOfRain2.UI
 {
-    public interface IUIModule
+    internal interface IUIModule
     {
-        void Enable(HUD hud);
+        void Enable(HUD hud, ArchipelagoClient2 client);
         void Disable();
     }
 }
