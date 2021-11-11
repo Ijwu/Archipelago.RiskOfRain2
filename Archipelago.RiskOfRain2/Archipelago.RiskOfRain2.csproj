@@ -4,12 +4,21 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="libs\**" />
     <EmbeddedResource Remove="libs\**" />
     <None Remove="libs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ArchipelagoClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ArchipelagoClient.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -308,5 +317,9 @@
       <HintPath>..\DLLs\Zio.dll</HintPath>
     </Reference>
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy &quot;C:\Users\Ijwu\OneDrive\Documents\Code\Archipelago.RiskOfRain2\Archipelago.RiskOfRain2\bin\Debug\netstandard2.0\Archipelago.RiskOfRain2.dll&quot; &quot;C:\Users\Ijwu\AppData\Roaming\r2modmanPlus-local\RiskOfRain2\profiles\Test\BepInEx\plugins\ArchipelagoMW-Archipelago\Archipelago.RiskOfRain2.dll&quot;" />
+  </Target>
 
 </Project>

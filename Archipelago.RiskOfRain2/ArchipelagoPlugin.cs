@@ -1,56 +1,42 @@
-using System;
 using System.Collections.Generic;
-using Archipelago.RiskOfRain2.Console;
+using Archipelago.RiskOfRain2.Enums;
 using Archipelago.RiskOfRain2.Net;
-using Archipelago.RiskOfRain2.UI;
-using Archipelago.RiskOfRain2.UI.Objectives;
 using BepInEx;
 using BepInEx.Bootstrap;
 using InLobbyConfig.Fields;
 using R2API;
 using R2API.Networking;
-using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
-using RoR2.Networking;
-using UnityEngine;
-using UnityEngine.Networking;
 
 namespace Archipelago.RiskOfRain2
 {
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    [BepInDependency("com.KingEnderBrine.InLobbyConfig", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("com.KingEnderBrine.InLobbyConfig")]
     [R2APISubmoduleDependency(nameof(NetworkingAPI), nameof(PrefabAPI), nameof(CommandHelper))]
     public class ArchipelagoPlugin : BaseUnityPlugin
     {
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "1.0.1";
+        public const string PluginVersion = "2.0";
 
-        private ArchipelagoClient AP;
+        private ArchipelagoClient2 AP;
         private bool isInLobbyConfigLoaded = false;
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
-        private bool willConnectToAP = false;
-        private bool isPlayingAP = false;
-        private string apSlotName;
+        private bool willConnectToAP = true;
+        private string apSlotName = "Ijwu";
         private string apPassword;
+        private bool enableDeathlink = false;
+        private DeathLinkDifficulty deathlinkDifficulty;
 
         public void Awake()
         {
             Log.Init(Logger);
 
-            AP = new ArchipelagoClient();
-            AP.OnClientDisconnect += AP_OnClientDisconnect;
-            Run.onRunStartGlobal += Run_onRunStartGlobal;
-            Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
-            ArchipelagoStartMessage.OnArchipelagoSessionStart += ArchipelagoStartMessage_OnArchipelagoSessionStart;
-            ArchipelagoEndMessage.OnArchipelagoSessionEnd += ArchipelagoEndMessage_OnArchipelagoSessionEnd;
-            ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
-            GameNetworkManager.onStopClientGlobal += GameNetworkManager_onStopClientGlobal;
-            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
+            AP = new ArchipelagoClient2();
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
@@ -67,118 +53,41 @@ namespace Archipelago.RiskOfRain2
             NetworkingAPI.RegisterMessageType<ArchipelagoChatMessage>();
 
             CommandHelper.AddToConsoleWhenReady();
+
+            On.RoR2.Run.Start += Run_Start;
         }
 
-        private void GameNetworkManager_onStopClientGlobal()
+        private void Run_Start(On.RoR2.Run.orig_Start orig, Run self)
         {
-            if (!NetworkServer.active && isPlayingAP)
+            if (willConnectToAP)
             {
-                //TODO: Disable UI Modules here.
-            }
-        }
+                AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
 
-        private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, RoR2.UI.ChatBox self)
-        {
-            if (!NetworkServer.active && isPlayingAP)
-            {
-                new ArchipelagoChatMessage(PlayerCharacterMasterController.instances[0].GetDisplayName(), self.inputField.text).Send(NetworkDestination.Server);
-                self.inputField.text = "";
-                orig(self);
-            }
-            else
-            {
-                orig(self);
-            }
-        }
-
-        private void ArchipelagoEndMessage_OnArchipelagoSessionEnd()
-        {
-            // This is for clients that are in a lobby but not the host of the lobby.
-            // They end up with multiple bars if they join multiple sessions otherwise.
-            if (!NetworkServer.active && isPlayingAP)
-            {
-                //TODO: disable UI modules
-            }
-        }
-
-        private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
-        {
-            Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
-            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
-            var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
-            {
-                StartCoroutine(AP.AttemptConnection());
-            }
-        }
-
-        private void ArchipelagoConsoleCommand_ArchipelagoCommandCalled(string url, int port, string slot, string password)
-        {
-            willConnectToAP = true;
-            isPlayingAP = true;
-            var uri = new UriBuilder();
-            uri.Scheme = "ws://";
-            uri.Host = url;
-            uri.Port = port;
-
-            AP.LastServerUrl = uri.Uri.AbsoluteUri;
-            AP.SlotName = slot;
-            AP.Password = password;
-
-            StartCoroutine(AP.AttemptConnection());
-        }
-
-        /// <summary>
-        /// Server -> Client packet responder. Should not run on server.
-        /// </summary>
-        private void ArchipelagoStartMessage_OnArchipelagoSessionStart()
-        {
-            if (!NetworkServer.active)
-            {
-                AP.LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
-                isPlayingAP = true;
-            }
-        }
-
-        private void Run_onRunStartGlobal(Run obj)
-        {
-            var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (willConnectToAP && (isHost || RoR2Application.isInSinglePlayer))
-            {
-                isPlayingAP = true;
-                var uri = new UriBuilder();
-                uri.Scheme = "ws://";
-                uri.Host = apServerUri;
-                uri.Port = apServerPort;
-                
-                AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
+                if (enableDeathlink)
+                {
+                    AP.EnableDeathLink(deathlinkDifficulty);
+                }
             }
 
-            if (isPlayingAP)
-            {
-                ArchipelagoTotalChecksObjectiveController.AddObjective();
-            }
-        }
-
-        private void Run_onRunDestroyGlobal(Run obj)
-        {
-            if (isPlayingAP)
-            {
-                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
-            }
+            orig(self);
         }
 
         private void CreateInLobbyMenu()
         {
             var configEntry = new InLobbyConfig.ModConfigEntry();
             configEntry.DisplayName = "Archipelago";
-            configEntry.SectionFields.Add("Archipelago Client Config", new List<IConfigField>
+            configEntry.SectionFields.Add("Client Config", new List<IConfigField>
             {
                 new StringConfigField("Archipelago Slot Name", () => apSlotName, (newValue) => apSlotName = newValue),
                 new StringConfigField("Archipelago Server Password", () => apPassword, (newValue) => apPassword = newValue),
                 new StringConfigField("Archipelago Server URL", () => apServerUri, (newValue) => apServerUri = newValue),
                 new IntConfigField("Archipelago Server Port", () => apServerPort, (newValue) => apServerPort = newValue),
                 new BooleanConfigField("Enable Archipelago?", () => willConnectToAP, (newValue) => willConnectToAP = newValue)
+            });
+            configEntry.SectionFields.Add("DeathLink Settings", new List<IConfigField>
+            {
+                new BooleanConfigField("Enable DeathLink?", () => enableDeathlink, (newValue) => enableDeathlink = newValue),
+                new EnumConfigField<DeathLinkDifficulty>("DeathLink Difficulty", () => deathlinkDifficulty, (newValue) => deathlinkDifficulty = newValue)
             });
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
         }
