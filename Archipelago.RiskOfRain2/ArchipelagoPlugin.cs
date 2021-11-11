@@ -132,6 +132,17 @@ namespace Archipelago.RiskOfRain2
                     player.cachedBody.transform.position,
                     player.cachedBody.transform.forward * 20);
             }
+            else if (Input.GetKeyDown(KeyCode.F3))
+            {
+                var player = LocalUserManager.GetFirstLocalUser();
+                for (int i = 0; i < 15; i++)
+                {
+                    PickupDropletController.CreatePickupDroplet(
+                    PickupCatalog.FindPickupIndex(RoR2Content.Items.Bear.itemIndex),
+                    player.cachedBody.transform.position,
+                    player.cachedBody.transform.forward * 20);
+                }
+            }
         }
     }
 }

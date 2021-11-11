@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using Archipelago.RiskOfRain2.Extensions;
 using Archipelago.RiskOfRain2.Net;
+using R2API.Networking;
+using R2API.Networking.Interfaces;
 using RoR2.UI;
 using TMPro;
 using UnityEngine;
@@ -37,16 +39,28 @@ namespace Archipelago.RiskOfRain2.UI
             this.hud = hud;
             SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
             ItemPickupStep = client.Locations.ItemPickupStep;
-            CurrentItemCount = client.Locations.CurrentChecks * ItemPickupStep;
             client.Locations.OnItemDropProcessed += Locations_OnItemDropProcessed;
 
+            Log.LogDebug($"Building UI with accent color: {client.AccentColor.r} {client.AccentColor.g} {client.AccentColor.b} {client.AccentColor.a}");
             BuildUI(client.AccentColor);
         }
 
         private void Locations_OnItemDropProcessed(int pickedUpCount)
-        {
-            CurrentItemCount = pickedUpCount;
+        {            
+            if ((pickedUpCount % ItemPickupStep) == 0)
+            {
+                Log.LogDebug("Current Item Count is a multiple of the pickup step. Resetting it to zero.");
+                CurrentItemCount = 0;
+            }
+            else
+            {
+                CurrentItemCount = pickedUpCount % ItemPickupStep;
+                Log.LogDebug($"Current Item Count is not an even multiple of the pickup step. Setting it to {CurrentItemCount}.");
+            }
+
             locationCheckBar.currentItemCount = CurrentItemCount;
+            Log.LogDebug($"Progress bar is at {CurrentItemCount} item count. It was told {pickedUpCount} items were picked up with a step of {ItemPickupStep}.");
+            new SyncLocationCheckProgress(CurrentItemCount, ItemPickupStep).Send(NetworkDestination.Clients);
         }
 
         public void Disable()
