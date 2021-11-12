@@ -54,10 +54,7 @@ namespace Archipelago.RiskOfRain2
             }
 
             NetworkingAPI.RegisterMessageType<SyncLocationCheckProgress>();
-            NetworkingAPI.RegisterMessageType<ArchipelagoStartMessage>();
-            NetworkingAPI.RegisterMessageType<ArchipelagoEndMessage>();
             NetworkingAPI.RegisterMessageType<SyncTotalCheckProgress>();
-            NetworkingAPI.RegisterMessageType<AllChecksComplete>();
             NetworkingAPI.RegisterMessageType<ArchipelagoChatMessage>();
 
             CommandHelper.AddToConsoleWhenReady();

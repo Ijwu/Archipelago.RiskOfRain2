@@ -31,6 +31,11 @@ namespace Archipelago.RiskOfRain2.Net
 
         public void OnReceived()
         {
+            if (currentChecks == totalChecks)
+            {
+                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+            }
+
             ArchipelagoTotalChecksObjectiveController.CurrentChecks = currentChecks;
             ArchipelagoTotalChecksObjectiveController.TotalChecks = totalChecks;
         }

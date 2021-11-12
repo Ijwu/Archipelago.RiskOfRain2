@@ -125,7 +125,6 @@ namespace Archipelago.RiskOfRain2.Handlers
             if (finishedAllChecks)
             {
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
-                new AllChecksComplete().Send(NetworkDestination.Clients);
             }
         }
 
