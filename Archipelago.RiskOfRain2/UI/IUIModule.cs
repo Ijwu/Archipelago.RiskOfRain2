@@ -7,7 +7,7 @@ namespace Archipelago.RiskOfRain2.UI
 {
     internal interface IUIModule
     {
-        void Enable(HUD hud, ArchipelagoClient2 client);
+        void Enable(HUD hud, ArchipelagoClient client);
         void Disable();
     }
 }

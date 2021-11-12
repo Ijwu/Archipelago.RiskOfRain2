@@ -10,9 +10,9 @@ namespace Archipelago.RiskOfRain2.Handlers
     {
         private List<Type> uiModuleTypes = new List<Type>();
         private List<IUIModule> uiModules = new List<IUIModule>();
-        private readonly ArchipelagoClient2 client;
+        private readonly ArchipelagoClient client;
 
-        public UIModuleHandler(ArchipelagoClient2 client)
+        public UIModuleHandler(ArchipelagoClient client)
         {
             uiModuleTypes = Assembly.GetExecutingAssembly().GetTypes().ToList().Where(x => x != typeof(IUIModule) && typeof(IUIModule).IsAssignableFrom(x)).ToList();
 
@@ -34,6 +34,7 @@ namespace Archipelago.RiskOfRain2.Handlers
 
         private void HUD_OnEnable(On.RoR2.UI.HUD.orig_OnEnable orig, RoR2.UI.HUD self)
         {
+            Log.LogDebug("HUD was enabled.");
             foreach (var type in uiModuleTypes)
             {
                 IUIModule item = (IUIModule)Activator.CreateInstance(type);
@@ -46,12 +47,15 @@ namespace Archipelago.RiskOfRain2.Handlers
 
         private void HUD_OnDisable(On.RoR2.UI.HUD.orig_OnDisable orig, RoR2.UI.HUD self)
         {
+            Log.LogDebug("HUD was disabled.");
             foreach (var item in uiModules)
             {
                 item.Disable();
             }
 
             uiModules.Clear();
+
+            orig(self);
         }
     }
 }

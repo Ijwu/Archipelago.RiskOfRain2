@@ -5,6 +5,7 @@ using Archipelago.RiskOfRain2.UI.Objectives;
 using R2API;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
+using R2API.Utils;
 using RoR2;
 using System.Linq;
 using UnityEngine;
@@ -73,6 +74,12 @@ namespace Archipelago.RiskOfRain2.Handlers
             ArchipelagoTotalChecksObjectiveController.CurrentChecks = currentChecks;
             ArchipelagoTotalChecksObjectiveController.TotalChecks = totalChecks;
 
+            if (totalChecks == currentChecks)
+            {
+                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+                ChatMessage.SendColored("All location checks already completed for this slot.", Color.yellow);
+            }
+
             Log.LogDebug($"TotalChecks: {totalChecks} PickupStep: {pickupStep} CurrentChecks: {currentChecks}");
         }
 
@@ -103,7 +110,7 @@ namespace Archipelago.RiskOfRain2.Handlers
 
             if (!spawnItem)
             {
-                EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() {color = new Color(.8f, .5f, 1, 1), origin = position }, true);
+                EffectManager.SpawnEffect(smokescreenPrefab, new EffectData() { origin = position }, true);
             }
 
             if (OnItemDropProcessed != null)

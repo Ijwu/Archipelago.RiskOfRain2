@@ -97,6 +97,13 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
+**2.0**
+
+* Internal rewrite of most code components.
+    * Most functionality should be the same as before, differences are noted here.
+* New options in the lobby config menu for DeathLink and accent color choice.
+* 
+
 **1.0.2**
 
 * Update supported Archipelago version to function on current AP source.

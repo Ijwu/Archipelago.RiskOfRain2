@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace Archipelago.RiskOfRain2.UI
+namespace Archipelago.RiskOfRain2.UI.ProgressBar
 {
     public class ArchipelagoLocationCheckProgressBarController : MonoBehaviour
     {
@@ -18,7 +18,7 @@ namespace Archipelago.RiskOfRain2.UI
         public void Update()
         {
             // -1 so that the bar appears full when a check is next.
-            var progressPercent = Mathf.InverseLerp(0, itemPickupStep-1, currentItemCount);
+            var progressPercent = Mathf.InverseLerp(0, itemPickupStep - 1, currentItemCount);
             if (fillRectTransform)
             {
                 fillRectTransform.anchorMin = new Vector2(0f, 0f);

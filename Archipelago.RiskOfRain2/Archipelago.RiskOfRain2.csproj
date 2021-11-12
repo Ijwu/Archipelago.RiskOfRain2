@@ -14,11 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="ArchipelagoClient.cs" />
+    <Compile Remove="ArchipelagoClientOLD.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="ArchipelagoClient.cs" />
+    <None Include="ArchipelagoClientOLD.cs" />
   </ItemGroup>
 
   <ItemGroup>

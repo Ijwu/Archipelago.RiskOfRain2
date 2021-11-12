@@ -11,7 +11,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-namespace Archipelago.RiskOfRain2.UI
+namespace Archipelago.RiskOfRain2.UI.ProgressBar
 {
     internal class ArchipelagoLocationCheckProgressBarUI : IUIModule
     {
@@ -34,7 +34,7 @@ namespace Archipelago.RiskOfRain2.UI
             }
         }
 
-        public void Enable(HUD hud, ArchipelagoClient2 client)
+        public void Enable(HUD hud, ArchipelagoClient client)
         {
             this.hud = hud;
             SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
@@ -46,8 +46,8 @@ namespace Archipelago.RiskOfRain2.UI
         }
 
         private void Locations_OnItemDropProcessed(int pickedUpCount)
-        {            
-            if ((pickedUpCount % ItemPickupStep) == 0)
+        {
+            if (pickedUpCount % ItemPickupStep == 0)
             {
                 Log.LogDebug("Current Item Count is a multiple of the pickup step. Resetting it to zero.");
                 CurrentItemCount = 0;
@@ -68,7 +68,8 @@ namespace Archipelago.RiskOfRain2.UI
             hud = null;
             SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
 
-            GameObject.Destroy(container);
+            container.SetActive(false);
+            UnityEngine.Object.Destroy(container);
         }
 
         private void BuildUI(Color accent)
@@ -102,7 +103,7 @@ namespace Archipelago.RiskOfRain2.UI
             rect.anchoredPosition = Vector2.zero;
             rect.ResetAnchorsAndOffsets();
 
-            var text = GameObject.Instantiate(hud.levelText.targetText);
+            var text = UnityEngine.Object.Instantiate(hud.levelText.targetText);
             text.text = "Location Check Progress: ";
             text.transform.SetParent(container.transform);
             text.transform.ResetScaleAndRotation();
@@ -116,10 +117,10 @@ namespace Archipelago.RiskOfRain2.UI
 
         private GameObject CreateProgressBar()
         {
-            var progressBarGameObject = GameObject.Instantiate(hud.expBar.gameObject);
-            GameObject.Destroy(progressBarGameObject.GetComponent<ExpBar>());
+            var progressBarGameObject = UnityEngine.Object.Instantiate(hud.expBar.gameObject);
+            UnityEngine.Object.Destroy(progressBarGameObject.GetComponent<ExpBar>());
 
-            RectTransform rectTransform = progressBarGameObject.GetComponent<RectTransform>();
+            var rectTransform = progressBarGameObject.GetComponent<RectTransform>();
             rectTransform.anchorMin = Vector2.zero;
             rectTransform.anchorMax = Vector2.one;
             rectTransform.pivot = Vector2.right;

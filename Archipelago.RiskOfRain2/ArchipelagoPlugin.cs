@@ -25,7 +25,7 @@ namespace Archipelago.RiskOfRain2
         public const string PluginName = "Archipelago";
         public const string PluginVersion = "2.0";
 
-        private ArchipelagoClient2 AP;
+        private ArchipelagoClient AP;
         private bool isConnectedToAP = false;
 
         private bool isInLobbyConfigLoaded = false;
@@ -43,7 +43,7 @@ namespace Archipelago.RiskOfRain2
         {
             Log.Init(Logger);
 
-            AP = new ArchipelagoClient2();
+            AP = new ArchipelagoClient();
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
@@ -69,24 +69,24 @@ namespace Archipelago.RiskOfRain2
 
         private void Run_onRunStartGlobal(Run obj)
         {
+            Log.LogDebug($"Run was started. Will connect to AP? {willConnectToAP} Is connected to AP? {isConnectedToAP}");
             if (willConnectToAP)
             {
+                ArchipelagoTotalChecksObjectiveController.AddObjective();
+                
                 AP.SetAccentColor(accentColor);
-                AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
+                isConnectedToAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
 
                 if (enableDeathlink)
                 {
                     AP.EnableDeathLink(deathlinkDifficulty);
                 }
-
-                isConnectedToAP = true;
-
-                ArchipelagoTotalChecksObjectiveController.AddObjective();
             }
         }
 
         private void Run_onRunDestroyGlobal(Run obj)
         {
+            Log.LogDebug($"Run was destroyed. Is connected to AP? {isConnectedToAP}.");
             if (isConnectedToAP)
             {
                 AP.Disconnect();
@@ -101,20 +101,17 @@ namespace Archipelago.RiskOfRain2
         {
             var configEntry = new InLobbyConfig.ModConfigEntry();
             configEntry.DisplayName = "Archipelago";
-            configEntry.SectionFields.Add("Server Connection Settings", new List<IConfigField>
+            configEntry.SectionFields.Add("Host Settings", new List<IConfigField>
             {
                 new StringConfigField("Archipelago Slot Name", () => apSlotName, (newValue) => apSlotName = newValue),
                 new StringConfigField("Archipelago Server Password", () => apPassword, (newValue) => apPassword = newValue),
                 new StringConfigField("Archipelago Server URL", () => apServerUri, (newValue) => apServerUri = newValue),
                 new IntConfigField("Archipelago Server Port", () => apServerPort, (newValue) => apServerPort = newValue),
-                new BooleanConfigField("Enable Archipelago?", () => willConnectToAP, (newValue) => willConnectToAP = newValue)
-            });
-            configEntry.SectionFields.Add("DeathLink Settings", new List<IConfigField>
-            {
+                new BooleanConfigField("Enable Archipelago?", () => willConnectToAP, (newValue) => willConnectToAP = newValue),
                 new BooleanConfigField("Enable DeathLink?", () => enableDeathlink, (newValue) => enableDeathlink = newValue),
                 new EnumConfigField<DeathLinkDifficulty>("DeathLink Difficulty", () => deathlinkDifficulty, (newValue) => deathlinkDifficulty = newValue)
             });
-            configEntry.SectionFields.Add("Client Side Settings", new List<IConfigField>
+            configEntry.SectionFields.Add("Client Settings", new List<IConfigField>
             {
                 new ColorConfigField("Accent Color", () => accentColor, (newValue) => accentColor = newValue)
             });
