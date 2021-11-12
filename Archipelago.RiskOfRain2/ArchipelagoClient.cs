@@ -32,7 +32,7 @@ namespace Archipelago.RiskOfRain2
             UI = new UIModuleHandler(this);
         }
 
-        public void InitializeForClientsidePlayer()
+        public void SetupClientsideMode()
         {
             ClientSideMode = true;
             Session = null;
@@ -40,6 +40,12 @@ namespace Archipelago.RiskOfRain2
             Locations = null;
 
             UI.Hook();
+        }
+
+        public void TeardownClientsideMode()
+        {
+            ClientSideMode = false;
+            UI.Unhook();
         }
 
         public bool Connect(string hostname, int port, string slotName, string password = null, List<string> tags = null)
@@ -56,11 +62,14 @@ namespace Archipelago.RiskOfRain2
                 tags.Add("DeathLink");
             }
 
-            if (!Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password))
+            var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password);
+            if (!loginResult.Successful)
             {
                 ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
                 return false;
             }
+
+            HandleLoginSuccessful(loginResult as LoginSuccessful);
 
             if (enableDeathLink)
             {
@@ -96,6 +105,15 @@ namespace Archipelago.RiskOfRain2
             Log.LogDebug($"Accent Color set to: {accentColor.r} {accentColor.g} {accentColor.b} {accentColor.a}");
         }
 
+        private void HandleLoginSuccessful(LoginSuccessful loginSuccessful)
+        {
+            var itemPickupStep = Convert.ToInt32(loginSuccessful.SlotData["itemPickupStep"]) + 1;
+            var totalChecks = loginSuccessful.LocationsChecked.Length + loginSuccessful.MissingChecks.Length;
+            var currentChecks = loginSuccessful.LocationsChecked.Length;
+
+            Locations.SetCheckCounts(totalChecks, itemPickupStep, currentChecks);
+        }
+
         private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
         {
             Log.LogDebug($"Socket was disconnected. ({e.Code}) {e.Reason} (Clean? {e.WasClean})");
@@ -120,15 +138,6 @@ namespace Archipelago.RiskOfRain2
             Log.LogDebug($"Received a packet of type: {packet.PacketType}");
             switch (packet)
             {
-                case ConnectedPacket connectedPacket:
-                {
-                    var itemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-                    var totalChecks = connectedPacket.LocationsChecked.Count + connectedPacket.MissingChecks.Count;
-                    var currentChecks = connectedPacket.LocationsChecked.Count;
-
-                    Locations.SetCheckCounts(totalChecks, itemPickupStep, currentChecks);
-                    break;
-                }
                 case PrintPacket printPacket:
                 {
                     ChatMessage.Send(printPacket.Text);
@@ -143,21 +152,20 @@ namespace Archipelago.RiskOfRain2
                         {
                             case JsonMessagePartType.PlayerId:
                             {
-                                int player_id = int.Parse(part.Text);
-                                //todo: yeah...
-                                text += "Steven";
+                                int playerId = int.Parse(part.Text);
+                                text += Session.Players.GetPlayerAlias(playerId);
                                 break;
                             }
                             case JsonMessagePartType.ItemId:
                             {
-                                int item_id = int.Parse(part.Text);
-                                text += Items.GetItemNameFromId(item_id);
+                                int itemId = int.Parse(part.Text);
+                                text += Items.GetItemNameFromId(itemId);
                                 break;
                             }
                             case JsonMessagePartType.LocationId:
                             {
-                                int location_id = int.Parse(part.Text);
-                                text += Locations.GetLocationNameFromId(location_id);
+                                int locationId = int.Parse(part.Text);
+                                text += Locations.GetLocationNameFromId(locationId);
                                 break;
                             }
                             default:

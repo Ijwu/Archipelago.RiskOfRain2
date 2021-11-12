@@ -14,14 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="ArchipelagoClientOLD.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="ArchipelagoClientOLD.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Reference Include="Archipelago.MultiClient.Net">
       <HintPath>..\DLLs\Archipelago.MultiClient.Net.dll</HintPath>
     </Reference>
