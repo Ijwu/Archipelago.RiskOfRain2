@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using R2API.Utils;
+﻿using R2API.Utils;
 using RoR2;
 
 namespace Archipelago.RiskOfRain2.Console

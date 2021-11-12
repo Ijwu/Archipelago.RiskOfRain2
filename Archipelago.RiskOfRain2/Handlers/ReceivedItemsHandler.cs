@@ -38,52 +38,52 @@ namespace Archipelago.RiskOfRain2.Handlers
             switch (itemName)
             {
                 case "Common Item":
-                    var common = Run.instance.availableTier1DropList.Choice();
-                    GiveItemToPlayers(common);
-                    break;
+                var common = Run.instance.availableTier1DropList.Choice();
+                GiveItemToPlayers(common);
+                break;
                 case "Uncommon Item":
-                    var uncommon = Run.instance.availableTier2DropList.Choice();
-                    GiveItemToPlayers(uncommon);
-                    break;
+                var uncommon = Run.instance.availableTier2DropList.Choice();
+                GiveItemToPlayers(uncommon);
+                break;
                 case "Legendary Item":
-                    var legendary = Run.instance.availableTier3DropList.Choice();
-                    GiveItemToPlayers(legendary);
-                    break;
+                var legendary = Run.instance.availableTier3DropList.Choice();
+                GiveItemToPlayers(legendary);
+                break;
                 case "Boss Item":
-                    var boss = Run.instance.availableBossDropList.Choice();
-                    GiveItemToPlayers(boss);
-                    break;
+                var boss = Run.instance.availableBossDropList.Choice();
+                GiveItemToPlayers(boss);
+                break;
                 case "Lunar Item":
-                    var lunar = Run.instance.availableLunarDropList.Choice();
-                    var pickupDef = PickupCatalog.GetPickupDef(lunar);
-                    if (pickupDef.itemIndex != ItemIndex.None)
-                    {
-                        GiveItemToPlayers(lunar);
-                    }
-                    else if (pickupDef.equipmentIndex != EquipmentIndex.None)
-                    {
-                        GiveEquipmentToPlayers(lunar);
-                    }
-                    break;
+                var lunar = Run.instance.availableLunarDropList.Choice();
+                var pickupDef = PickupCatalog.GetPickupDef(lunar);
+                if (pickupDef.itemIndex != ItemIndex.None)
+                {
+                    GiveItemToPlayers(lunar);
+                }
+                else if (pickupDef.equipmentIndex != EquipmentIndex.None)
+                {
+                    GiveEquipmentToPlayers(lunar);
+                }
+                break;
                 case "Equipment":
-                    var equipment = Run.instance.availableEquipmentDropList.Choice();
-                    GiveEquipmentToPlayers(equipment);
-                    break;
+                var equipment = Run.instance.availableEquipmentDropList.Choice();
+                GiveEquipmentToPlayers(equipment);
+                break;
                 case "Item Scrap, White":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapWhite.itemIndex));
-                    break;
+                GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapWhite.itemIndex));
+                break;
                 case "Item Scrap, Green":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapGreen.itemIndex));
-                    break;
+                GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapGreen.itemIndex));
+                break;
                 case "Item Scrap, Red":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapRed.itemIndex));
-                    break;
+                GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapRed.itemIndex));
+                break;
                 case "Item Scrap, Yellow":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapYellow.itemIndex));
-                    break;
+                GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ScrapYellow.itemIndex));
+                break;
                 case "Dio's Best Friend":
-                    GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ExtraLife.itemIndex));
-                    break;
+                GiveItemToPlayers(PickupCatalog.FindPickupIndex(RoR2Content.Items.ExtraLife.itemIndex));
+                break;
             }
         }
 

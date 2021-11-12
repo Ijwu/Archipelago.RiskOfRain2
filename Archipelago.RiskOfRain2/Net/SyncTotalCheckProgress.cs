@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Archipelago.RiskOfRain2.UI.Objectives;
+﻿using Archipelago.RiskOfRain2.UI.Objectives;
 using R2API.Networking.Interfaces;
 using UnityEngine.Networking;
 

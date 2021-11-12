@@ -1,5 +1,5 @@
-﻿using Archipelago.MultiClient.Net.Helpers;
-using Archipelago.MultiClient.Net.Models;
+﻿using System.Linq;
+using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI.Objectives;
 using R2API;
@@ -7,7 +7,6 @@ using R2API.Networking;
 using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
-using System.Linq;
 using UnityEngine;
 
 namespace Archipelago.RiskOfRain2.Handlers
