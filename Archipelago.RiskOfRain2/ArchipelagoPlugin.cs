@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Enums;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI.Objectives;
@@ -7,6 +8,7 @@ using BepInEx.Bootstrap;
 using InLobbyConfig.Fields;
 using R2API;
 using R2API.Networking;
+using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
 using UnityEngine;
@@ -27,7 +29,7 @@ namespace Archipelago.RiskOfRain2
         public const string PluginVersion = "2.0";
 
         private ArchipelagoClient AP;
-        private bool isConnectedToAP = false;
+        private bool isPlayingAP = false;
 
         private bool isInLobbyConfigLoaded = false;
         private string apServerUri = "localhost";
@@ -66,11 +68,13 @@ namespace Archipelago.RiskOfRain2
 
             //todo: remove debug
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
+            On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
+            ArchipelagoChatMessage.OnChatReceivedFromClient += SendChatToAP;
         }
 
         private void Run_onRunStartGlobal(Run obj)
         {
-            Log.LogDebug($"Run was started. Will connect to AP? {willConnectToAP} Is connected to AP? {isConnectedToAP}");
+            Log.LogDebug($"Run was started. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
             if (willConnectToAP)
             {
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
@@ -78,7 +82,7 @@ namespace Archipelago.RiskOfRain2
                 Log.LogDebug($"Was network server active? {NetworkServer.active} Is local client active? {NetworkServer.localClientActive} Is in multiplayer? {RoR2Application.isInMultiPlayer} Is in singleplayer? {RoR2Application.isInSinglePlayer}");
                 if (NetworkServer.active && RoR2Application.isInMultiPlayer)
                 {
-                    isConnectedToAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
+                    isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
 
                     if (enableDeathlink)
                     {
@@ -87,6 +91,7 @@ namespace Archipelago.RiskOfRain2
                 }
                 else
                 {
+                    isPlayingAP = true;
                     AP.InitializeForClientsidePlayer();
                 }
             }
@@ -94,17 +99,47 @@ namespace Archipelago.RiskOfRain2
 
         private void Run_onRunDestroyGlobal(Run obj)
         {
-            Log.LogDebug($"Run was destroyed. Is connected to AP? {isConnectedToAP}.");
-            if (isConnectedToAP)
+            Log.LogDebug($"Run was destroyed. Is connected to AP? {isPlayingAP}.");
+            if (isPlayingAP)
             {
                 if (NetworkServer.active && RoR2Application.isInMultiPlayer)
                 {
                     AP.Disconnect();
-                    isConnectedToAP = false;
                 }
 
+                isPlayingAP = false;
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
             }
+        }
+
+        private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, RoR2.UI.ChatBox self)
+        {
+            if (isPlayingAP)
+            {
+                if (!NetworkServer.active && RoR2Application.isInMultiPlayer)
+                {
+                    var player = LocalUserManager.GetFirstLocalUser();
+                    var name = player.userProfile.name;
+                    new ArchipelagoChatMessage(name, self.inputField.text).Send(NetworkDestination.Server);
+                }
+                else if (NetworkServer.active && RoR2Application.isInMultiPlayer)
+                {
+                    var player = LocalUserManager.GetFirstLocalUser();
+                    var name = player.userProfile.name;
+                    SendChatToAP(name, self.inputField.text);
+                }
+
+                self.SetShowInput(false);
+            }
+            else
+            {
+                orig(self);
+            }
+        }
+
+        private void SendChatToAP(string author, string message)
+        {
+            AP.Session.Socket.SendPacket(new SayPacket() { Text = $"({author}): {message}" });
         }
 
         private void CreateInLobbyMenu()

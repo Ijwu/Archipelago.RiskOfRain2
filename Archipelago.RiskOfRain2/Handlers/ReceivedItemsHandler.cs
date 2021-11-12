@@ -25,6 +25,11 @@ namespace Archipelago.RiskOfRain2.Handlers
             helper.ItemReceived -= Helper_ItemReceived;
         }
 
+        public string GetItemNameFromId(int id)
+        {
+            return helper.GetItemName(id);
+        }
+
         private void Helper_ItemReceived(ReceivedItemsHelper helper)
         {
             var itemName = helper.PeekItemName();

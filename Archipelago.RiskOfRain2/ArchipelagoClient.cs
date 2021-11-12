@@ -122,16 +122,56 @@ namespace Archipelago.RiskOfRain2
         private void Socket_PacketReceived(ArchipelagoPacketBase packet)
         {
             Log.LogDebug($"Received a packet of type: {packet.PacketType}");
-            switch (packet.PacketType)
+            switch (packet)
             {
-                case ArchipelagoPacketType.Connected:
+                case ConnectedPacket connectedPacket:
                 {
-                    var connectedPacket = (ConnectedPacket)packet;
                     var itemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
                     var totalChecks = connectedPacket.LocationsChecked.Count + connectedPacket.MissingChecks.Count;
                     var currentChecks = connectedPacket.LocationsChecked.Count;
 
                     Locations.SetCheckCounts(totalChecks, itemPickupStep, currentChecks);
+                    break;
+                }
+                case PrintPacket printPacket:
+                {
+                    ChatMessage.Send(printPacket.Text);
+                    break;
+                }
+                case PrintJsonPacket printJsonPacket:
+                {
+                    string text = "";
+                    foreach (var part in printJsonPacket.Data)
+                    {
+                        switch (part.Type)
+                        {
+                            case JsonMessagePartType.PlayerId:
+                            {
+                                int player_id = int.Parse(part.Text);
+                                //todo: yeah...
+                                text += "Steven";
+                                break;
+                            }
+                            case JsonMessagePartType.ItemId:
+                            {
+                                int item_id = int.Parse(part.Text);
+                                text += Items.GetItemNameFromId(item_id);
+                                break;
+                            }
+                            case JsonMessagePartType.LocationId:
+                            {
+                                int location_id = int.Parse(part.Text);
+                                text += Locations.GetLocationNameFromId(location_id);
+                                break;
+                            }
+                            default:
+                            {
+                                text += part.Text;
+                                break;
+                            }
+                        }
+                    }
+                    ChatMessage.Send(text);
                     break;
                 }
             }

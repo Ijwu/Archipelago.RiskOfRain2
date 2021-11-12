@@ -64,6 +64,11 @@ namespace Archipelago.RiskOfRain2.Handlers
             };
         }
 
+        public string GetLocationNameFromId(int id)
+        {
+            return helper.GetLocationNameFromId(id);
+        }
+
         public void SetCheckCounts(int totalChecks, int pickupStep, int currentChecks)
         {
             TotalChecks = totalChecks;
