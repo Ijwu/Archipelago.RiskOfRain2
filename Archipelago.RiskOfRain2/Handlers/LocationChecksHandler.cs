@@ -81,6 +81,8 @@ namespace Archipelago.RiskOfRain2.Handlers
             }
 
             Log.LogDebug($"TotalChecks: {totalChecks} PickupStep: {pickupStep} CurrentChecks: {currentChecks}");
+            new SyncLocationCheckProgress(PickedUpItemCount, ItemPickupStep).Send(NetworkDestination.Clients);
+            new SyncTotalCheckProgress(CurrentChecks, TotalChecks).Send(NetworkDestination.Clients);
         }
 
         public void Hook()

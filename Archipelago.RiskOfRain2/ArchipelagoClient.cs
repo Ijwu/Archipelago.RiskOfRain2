@@ -25,6 +25,7 @@ namespace Archipelago.RiskOfRain2
         public LocationChecksHandler Locations { get; private set; }
         public UIModuleHandler UI { get; private set; }
         public Color AccentColor { get; private set; }
+        public bool ClientSideMode { get; private set; }
 
         private bool enableDeathLink;
         private DeathLinkDifficulty deathlinkDifficulty;
@@ -33,6 +34,16 @@ namespace Archipelago.RiskOfRain2
         public ArchipelagoClient()
         {
             UI = new UIModuleHandler(this);
+        }
+
+        public void InitializeForClientsidePlayer()
+        {
+            ClientSideMode = true;
+            Session = null;
+            Items = null;
+            Locations = null;
+
+            UI.Hook();
         }
 
         public bool Connect(string hostname, int port, string slotName, string password = null, List<string> tags = null)

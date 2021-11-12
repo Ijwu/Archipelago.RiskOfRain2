@@ -67,6 +67,7 @@ namespace Archipelago.RiskOfRain2
 
             accentColor = new Color(.8f, .5f, 1, 1);
 
+            //todo: remove debug
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
         }
 
@@ -89,7 +90,7 @@ namespace Archipelago.RiskOfRain2
                 }
                 else
                 {
-                    HookClientPlayer();
+                    AP.InitializeForClientsidePlayer();
                 }
             }
         }
@@ -106,21 +107,7 @@ namespace Archipelago.RiskOfRain2
                 }
 
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
-
-                UnhookClientPlayer();
             }
-        }
-
-        private void HookClientPlayer()
-        {
-            Log.LogDebug("Archipelago detected. Client hooking initiating.");
-            
-        }
-
-        private void UnhookClientPlayer()
-        {
-            Log.LogDebug("Client unhooking initiating.");
-            
         }
 
         private void CreateInLobbyMenu()

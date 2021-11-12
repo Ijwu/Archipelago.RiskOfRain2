@@ -18,14 +18,48 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
         public int ItemPickupStep { get; set; }
         public int CurrentItemCount { get; set; }
 
+        private ArchipelagoClient client;
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
         private GameObject container;
+
+
+        public void Enable(HUD hud, ArchipelagoClient client)
+        {
+            this.client = client;
+            this.hud = hud;
+            SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
+
+            if (!client.ClientSideMode)
+            {
+                ItemPickupStep = client.Locations.ItemPickupStep;
+                client.Locations.OnItemDropProcessed += Locations_OnItemDropProcessed;
+            }
+
+            Log.LogDebug($"Building UI with accent color: {client.AccentColor.r} {client.AccentColor.g} {client.AccentColor.b} {client.AccentColor.a}");
+            BuildUI(client.AccentColor);
+        }
+
+        public void Disable()
+        {
+            hud = null;
+            SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
+
+            if (!client.ClientSideMode)
+            {
+                client.Locations.OnItemDropProcessed -= Locations_OnItemDropProcessed;
+            }
+
+            container.SetActive(false);
+            UnityEngine.Object.Destroy(container);
+        }
 
         private void SyncLocationCheckProgress_LocationSynced(int count, int step)
         {
             ItemPickupStep = step;
             CurrentItemCount = count;
+
+            SetProgressBar(count);
 
             if (locationCheckBar != null)
             {
@@ -34,18 +68,13 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
             }
         }
 
-        public void Enable(HUD hud, ArchipelagoClient client)
+        private void Locations_OnItemDropProcessed(int pickedUpCount)
         {
-            this.hud = hud;
-            SyncLocationCheckProgress.OnLocationSynced += SyncLocationCheckProgress_LocationSynced;
-            ItemPickupStep = client.Locations.ItemPickupStep;
-            client.Locations.OnItemDropProcessed += Locations_OnItemDropProcessed;
-
-            Log.LogDebug($"Building UI with accent color: {client.AccentColor.r} {client.AccentColor.g} {client.AccentColor.b} {client.AccentColor.a}");
-            BuildUI(client.AccentColor);
+            SetProgressBar(pickedUpCount);
+            new SyncLocationCheckProgress(CurrentItemCount, ItemPickupStep).Send(NetworkDestination.Clients);
         }
 
-        private void Locations_OnItemDropProcessed(int pickedUpCount)
+        private void SetProgressBar(int pickedUpCount)
         {
             if (pickedUpCount % ItemPickupStep == 0)
             {
@@ -60,16 +89,6 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
 
             locationCheckBar.currentItemCount = CurrentItemCount;
             Log.LogDebug($"Progress bar is at {CurrentItemCount} item count. It was told {pickedUpCount} items were picked up with a step of {ItemPickupStep}.");
-            new SyncLocationCheckProgress(CurrentItemCount, ItemPickupStep).Send(NetworkDestination.Clients);
-        }
-
-        public void Disable()
-        {
-            hud = null;
-            SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
-
-            container.SetActive(false);
-            UnityEngine.Object.Destroy(container);
         }
 
         private void BuildUI(Color accent)
