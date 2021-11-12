@@ -10,6 +10,7 @@ using R2API.Networking;
 using R2API.Utils;
 using RoR2;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Archipelago.RiskOfRain2
 {
@@ -65,6 +66,8 @@ namespace Archipelago.RiskOfRain2
             Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
 
             accentColor = new Color(.8f, .5f, 1, 1);
+
+            On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
         }
 
         private void Run_onRunStartGlobal(Run obj)
@@ -73,13 +76,20 @@ namespace Archipelago.RiskOfRain2
             if (willConnectToAP)
             {
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
-                
                 AP.SetAccentColor(accentColor);
-                isConnectedToAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
-
-                if (enableDeathlink)
+                Log.LogDebug($"Was network server active? {NetworkServer.active} Is local client active? {NetworkServer.localClientActive} Is in multiplayer? {RoR2Application.isInMultiPlayer} Is in singleplayer? {RoR2Application.isInSinglePlayer}");
+                if (NetworkServer.active && RoR2Application.isInMultiPlayer)
                 {
-                    AP.EnableDeathLink(deathlinkDifficulty);
+                    isConnectedToAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
+
+                    if (enableDeathlink)
+                    {
+                        AP.EnableDeathLink(deathlinkDifficulty);
+                    }
+                }
+                else
+                {
+                    HookClientPlayer();
                 }
             }
         }
@@ -89,12 +99,28 @@ namespace Archipelago.RiskOfRain2
             Log.LogDebug($"Run was destroyed. Is connected to AP? {isConnectedToAP}.");
             if (isConnectedToAP)
             {
-                AP.Disconnect();
-
-                isConnectedToAP = false;
+                if (NetworkServer.active && RoR2Application.isInMultiPlayer)
+                {
+                    AP.Disconnect();
+                    isConnectedToAP = false;
+                }
 
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+
+                UnhookClientPlayer();
             }
+        }
+
+        private void HookClientPlayer()
+        {
+            Log.LogDebug("Archipelago detected. Client hooking initiating.");
+            
+        }
+
+        private void UnhookClientPlayer()
+        {
+            Log.LogDebug("Client unhooking initiating.");
+            
         }
 
         private void CreateInLobbyMenu()

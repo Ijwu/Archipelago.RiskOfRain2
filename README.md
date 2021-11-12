@@ -99,10 +99,16 @@ Internal versions are unreleased versions of the mod. They are pointed out in th
 
 **2.0**
 
+Changes:
+
 * Internal rewrite of most code components.
     * Most functionality should be the same as before, differences are noted here.
 * New options in the lobby config menu for DeathLink and accent color choice.
-* 
+    * Accent color is the color of your location check bar. It's customizable now!
+    * DeathLink NOT currently implemented.
+
+REMOVED FEATURES:
+* Auto reconnection. I will probably try to re-implement this at another time.
 
 **1.0.2**
 

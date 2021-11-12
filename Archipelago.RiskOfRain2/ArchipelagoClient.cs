@@ -30,13 +30,17 @@ namespace Archipelago.RiskOfRain2
         private DeathLinkDifficulty deathlinkDifficulty;
         private DeathLinkService deathLinkService;
 
+        public ArchipelagoClient()
+        {
+            UI = new UIModuleHandler(this);
+        }
+
         public bool Connect(string hostname, int port, string slotName, string password = null, List<string> tags = null)
         {
             Log.LogDebug($"Attempting connection to new session. Host: {hostname}:{port} Slot: {slotName}");
             Session = ArchipelagoSessionFactory.CreateSession(hostname, port);
             Items = new ReceivedItemsHandler(Session.Items);
             Locations = new LocationChecksHandler(Session.Locations);
-            UI = new UIModuleHandler(this);
             Session.Socket.SocketClosed += Socket_SocketClosed;
             Session.Socket.PacketReceived += Socket_PacketReceived;
 
