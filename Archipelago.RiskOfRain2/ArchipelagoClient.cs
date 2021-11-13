@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
@@ -62,10 +63,15 @@ namespace Archipelago.RiskOfRain2
                 tags.Add("DeathLink");
             }
 
+            Items.Hook();
+            Locations.Hook();
+            UI.Hook();
+
             var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password);
             if (!loginResult.Successful)
             {
                 ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
+                UnhookEverything();
                 return false;
             }
 
@@ -76,18 +82,15 @@ namespace Archipelago.RiskOfRain2
                 deathLinkService = Session.CreateDeathLinkServiceAndEnable();
             }
 
-            Items.Hook();
-            Locations.Hook();
-            UI.Hook();
-
             ChatMessage.SendColored($"Succesfully connected to Archipelago at {hostname}:{port} for slot {slotName}.", Color.green);
             return true;
         }
 
         public void Disconnect()
         {
-            Session.Socket.DisconnectAsync();
-            RunDisconnectProcedure();
+            Log.LogDebug("ArchipelagoClient.Disconnect() was executed.");
+            Session.Socket.Disconnect();
+            UnhookEverything();
             Session.Socket.SocketClosed -= Socket_SocketClosed;
             Session.Socket.PacketReceived -= Socket_PacketReceived;
         }
@@ -123,10 +126,10 @@ namespace Archipelago.RiskOfRain2
                 OnClientDisconnect(e.Code, e.Reason, e.WasClean);
             }
 
-            RunDisconnectProcedure();
+            UnhookEverything();
         }
 
-        private void RunDisconnectProcedure()
+        private void UnhookEverything()
         {
             Items.Unhook();
             Locations.Unhook();

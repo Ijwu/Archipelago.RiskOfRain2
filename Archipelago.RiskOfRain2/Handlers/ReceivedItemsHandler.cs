@@ -35,6 +35,8 @@ namespace Archipelago.RiskOfRain2.Handlers
             var itemName = helper.PeekItemName();
             _ = helper.DequeueItem();
 
+            Log.LogDebug($"Received an item: {itemName}");
+
             switch (itemName)
             {
                 case "Common Item":

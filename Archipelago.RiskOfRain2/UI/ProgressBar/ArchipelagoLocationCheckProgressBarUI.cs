@@ -104,8 +104,8 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
             rectTransform.anchoredPosition = Vector2.zero;
             container.transform.ResetScaleAndRotation();
 
+            Log.LogDebug($"Setting location check bar canvas to color: {accent.r} {accent.g} {accent.b} {accent.a}");
             locationCheckBar.canvas.SetColor(accent);
-
             this.container = container;
         }
 

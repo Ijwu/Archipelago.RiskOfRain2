@@ -42,8 +42,11 @@ namespace Archipelago.RiskOfRain2
         private bool enableDeathlink = false;
         private DeathLinkDifficulty deathlinkDifficulty;
 
-        private bool IsHostOrSingleplayer() => (NetworkServer.active && RoR2Application.isInMultiPlayer) || RoR2Application.isInSinglePlayer;
-        private bool IsMultiplayerClient() => !NetworkServer.active && RoR2Application.isInMultiPlayer;
+        private bool isHostOrSingleplayer = false;
+        private bool isMultiplayerClient = false;
+
+        private bool CheckIsHostOrSingleplayer() => (NetworkServer.active && RoR2Application.isInMultiPlayer) || RoR2Application.isInSinglePlayer;
+        private bool CheckIsMultiplayerClient() => !NetworkServer.active && RoR2Application.isInMultiPlayer;
 
         public void Awake()
         {
@@ -65,7 +68,7 @@ namespace Archipelago.RiskOfRain2
             CommandHelper.AddToConsoleWhenReady();
 
             Run.onRunStartGlobal += Run_onRunStartGlobal;
-            Run.onRunDestroyGlobal += Run_onRunDestroyGlobal;
+            On.RoR2.Run.OnDestroy += Run_OnDestroy;
 
             accentColor = new Color(.8f, .5f, 1, 1);
 
@@ -77,13 +80,16 @@ namespace Archipelago.RiskOfRain2
 
         private void Run_onRunStartGlobal(Run obj)
         {
+            isHostOrSingleplayer = CheckIsHostOrSingleplayer();
+            isMultiplayerClient = CheckIsMultiplayerClient();
+
             Log.LogDebug($"Run was started. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
             if (willConnectToAP)
             {
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
                 AP.SetAccentColor(accentColor);
                 Log.LogDebug($"Was network server active? {NetworkServer.active} Is local client active? {NetworkServer.localClientActive} Is network client active? {NetworkClient.active} Is in multiplayer? {RoR2Application.isInMultiPlayer} Is in singleplayer? {RoR2Application.isInSinglePlayer}");
-                if (IsHostOrSingleplayer())
+                if (isHostOrSingleplayer)
                 {
                     isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
 
@@ -92,7 +98,7 @@ namespace Archipelago.RiskOfRain2
                         AP.EnableDeathLink(deathlinkDifficulty);
                     }
                 }
-                else if (IsMultiplayerClient())
+                else if (isMultiplayerClient)
                 {
                     isPlayingAP = true;
                     AP.SetupClientsideMode();
@@ -100,17 +106,49 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
+        private void Run_OnDestroy(On.RoR2.Run.orig_OnDestroy orig, Run self)
+        {
+            Log.LogDebug($"Run was destroyed. Is connected to AP? {isPlayingAP}. Is socket connected? {AP?.Session?.Socket?.Connected}");
+            Log.LogDebug($"IsHostOrSingleplayer: {CheckIsHostOrSingleplayer()} IsMultiplayerClient: {CheckIsMultiplayerClient()}");
+            Log.LogDebug($"NetworkServer.Active: {NetworkServer.active} IsInMultiplayer: {RoR2Application.isInMultiPlayer} IsInSingleplayer: {RoR2Application.isInSinglePlayer}");
+            if (isPlayingAP || (AP.Session != null && AP.Session.Socket.Connected))
+            {
+                if (isHostOrSingleplayer)
+                {
+                    Log.LogDebug("Run was destroyed. Disconnecting.");
+                    AP.Disconnect();
+                }
+                else if (isMultiplayerClient)
+                {
+                    Log.LogDebug("Run was destroyed. Tearing down clientside mode.");
+                    AP.TeardownClientsideMode();
+                }
+
+                isPlayingAP = false;
+                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
+            }
+
+            isHostOrSingleplayer = false;
+            isMultiplayerClient = false;
+
+            orig(self);
+        }
+
         private void Run_onRunDestroyGlobal(Run obj)
         {
-            Log.LogDebug($"Run was destroyed. Is connected to AP? {isPlayingAP}.");
-            if (isPlayingAP)
+            Log.LogDebug($"Run was destroyed. Is connected to AP? {isPlayingAP}. Is socket connected? {AP?.Session?.Socket?.Connected}");
+            Log.LogDebug($"IsHostOrSingleplayer: {CheckIsHostOrSingleplayer()} IsMultiplayerClient: {CheckIsMultiplayerClient()}");
+            Log.LogDebug($"NetworkServer.Active: {NetworkServer.active} IsInMultiplayer: {RoR2Application.isInMultiPlayer} IsInSingleplayer: {RoR2Application.isInSinglePlayer}");
+            if (isPlayingAP || (AP.Session != null && AP.Session.Socket.Connected))
             {
-                if (IsHostOrSingleplayer())
+                if (CheckIsHostOrSingleplayer())
                 {
+                    Log.LogDebug("Run was destroyed. Disconnecting.");
                     AP.Disconnect();
                 } 
-                else if (IsMultiplayerClient())
+                else if (CheckIsMultiplayerClient())
                 {
+                    Log.LogDebug("Run was destroyed. Tearing down clientside mode.");
                     AP.TeardownClientsideMode();
                 }
 
@@ -123,7 +161,7 @@ namespace Archipelago.RiskOfRain2
         {
             if (isPlayingAP)
             {
-                if (IsMultiplayerClient())
+                if (CheckIsMultiplayerClient())
                 {
                     var player = LocalUserManager.GetFirstLocalUser();
                     var name = player.userProfile.name;
@@ -132,7 +170,7 @@ namespace Archipelago.RiskOfRain2
                         new ArchipelagoChatMessage(name, self.inputField.text).Send(NetworkDestination.Server);
                     }
                 }
-                else if (IsHostOrSingleplayer())
+                else if (CheckIsHostOrSingleplayer())
                 {
                     var player = LocalUserManager.GetFirstLocalUser();
                     var name = player.userProfile.name;
@@ -178,9 +216,14 @@ namespace Archipelago.RiskOfRain2
             });
             configEntry.SectionFields.Add("Client Settings", new List<IConfigField>
             {
-                new ColorConfigField("Accent Color", () => accentColor, (newValue) => accentColor = newValue)
+                new ColorConfigField("Accent Color", () => accentColor, (newValue) => accentColor = ProcessAccentColor(newValue))
             });
             InLobbyConfig.ModConfigCatalog.Add(configEntry);
+        }
+
+        private Color ProcessAccentColor(Color accent)
+        {
+            return new Color(Mathf.InverseLerp(0, 255, accent.r), Mathf.InverseLerp(0, 255, accent.g), Mathf.InverseLerp(0, 255, accent.b), Mathf.InverseLerp(0, 255, accent.a));
         }
 
         //TODO: remove debug stuff when done hacking shit up
