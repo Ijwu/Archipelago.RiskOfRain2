@@ -150,7 +150,6 @@ namespace Archipelago.RiskOfRain2.Handlers
                     finishedAllChecks = true;
                 }
 
-                //TODO: prepopulate item send list and allow randomization
                 var itemSendName = $"ItemPickup{CurrentChecks}";
                 var itemLocationId = helper.GetLocationIdFromName(ArchipelagoPlugin.GameName, itemSendName);
                 Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");

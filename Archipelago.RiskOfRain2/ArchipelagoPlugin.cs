@@ -35,7 +35,7 @@ namespace Archipelago.RiskOfRain2
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
         private bool willConnectToAP = true;
-        private string apSlotName = "Ijwu";
+        private string apSlotName = "";
         private string apPassword;
         private Color accentColor;
 
@@ -72,8 +72,6 @@ namespace Archipelago.RiskOfRain2
 
             accentColor = new Color(.8f, .5f, 1, 1);
 
-            //todo: remove debug
-            On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
             ArchipelagoChatMessage.OnChatReceivedFromClient += SendChatToAP;
         }
@@ -225,30 +223,6 @@ namespace Archipelago.RiskOfRain2
         private Color ProcessAccentColor(Color accent)
         {
             return new Color(Mathf.InverseLerp(0, 255, accent.r), Mathf.InverseLerp(0, 255, accent.g), Mathf.InverseLerp(0, 255, accent.b), Mathf.InverseLerp(0, 255, accent.a));
-        }
-
-        //TODO: remove debug stuff when done hacking shit up
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F2))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                PickupDropletController.CreatePickupDroplet(
-                    PickupCatalog.FindPickupIndex(RoR2Content.Items.Bear.itemIndex),
-                    player.cachedBody.transform.position,
-                    player.cachedBody.transform.forward * 20);
-            }
-            else if (Input.GetKeyDown(KeyCode.F3))
-            {
-                var player = LocalUserManager.GetFirstLocalUser();
-                for (int i = 0; i < 15; i++)
-                {
-                    PickupDropletController.CreatePickupDroplet(
-                    PickupCatalog.FindPickupIndex(RoR2Content.Items.Bear.itemIndex),
-                    player.cachedBody.transform.position,
-                    player.cachedBody.transform.forward * 20);
-                }
-            }
         }
     }
 }

@@ -118,6 +118,8 @@ Changes:
 * New options in the lobby config menu for DeathLink and accent color choice.
     * Accent color is the color of your location check bar. It's customizable now!
 * DeathLink implementation. Enable it from the host settings menu.
+* All players in the party need to set their Archipelago checkbox to checked. 
+    * This is intentional, it makes life easier for me. Also, it defaults to checked.
 
 REMOVED FEATURES:
 * Auto reconnection. I will probably try to re-implement this at another time.
