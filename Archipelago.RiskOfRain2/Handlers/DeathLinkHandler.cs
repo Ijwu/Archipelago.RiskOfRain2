@@ -54,16 +54,26 @@ namespace Archipelago.RiskOfRain2.Handlers
         {
             Log.LogDebug("Running Drizzle DeathLink");
             var listField = typeof(CharacterMaster).GetField("deployablesList", BindingFlags.NonPublic | BindingFlags.Instance);
+            Log.LogDebug($"DeathLink.Drizzle: List Field is null? {listField == null}");
             var instances = PlayerCharacterMasterController.instances;
             foreach (PlayerCharacterMasterController playerCharacterMaster in instances)
             {
                 var deployables = listField.GetValue(playerCharacterMaster.master) as List<DeployableInfo>;
-                foreach (var deployable in deployables)
+                Log.LogDebug($"DeathLink.Drizzle: Is deployables null? {deployables == null}");
+                if (deployables != null)
                 {
-                    var master = deployable.deployable.GetComponent<CharacterMaster>();
-                    var body = master.GetBodyObject();
-                    var health = body.GetComponent<HealthComponent>();
-                    health.Suicide();
+                    foreach (var deployableInfo in deployables)
+                    {
+                        var master = deployableInfo.deployable?.GetComponent<CharacterMaster>();
+                        var body = master?.GetBodyObject();
+                        Log.LogDebug($"DeathLink.Drizzle: Is body null? {body == null} Body name: {body?.name ?? "null"} Owner master name: {deployableInfo.deployable?.ownerMaster?.name}");
+                        if (!body)
+                        {
+                            continue;
+                        }
+                        var health = body.GetComponent<HealthComponent>();
+                        health.Suicide();
+                    }
                 }
             }
         }
