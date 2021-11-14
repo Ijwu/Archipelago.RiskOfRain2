@@ -94,6 +94,18 @@ Keep password blank if there is no password on the server.
 
 Simply check `Enable Archipelago?` and when you start the run it will automatically connect and print a message stating successful connection in your in-game chat.
 
+## DeathLink
+
+Enabling DeathLink for Risk of Rain 2 causes a negative effect to impact the Risk of Rain party when another DeathLink enabled player dies anywhere in the multiworld.
+
+There are five difficulty levels to DeathLink in Risk of Rain 2. They are as follows:
+
+1. Drizzle: All deployables die for all party members.
+2. Rainstorm: All party members lose all money.
+3. Monsoon: All party members lose a random item from their inventory.
+4. Typhoon: A doppelganger invasion occurs.
+5. AHAHAHAHAHA: A random party member dies. Good bye.
+
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
@@ -105,7 +117,7 @@ Changes:
     * Most functionality should be the same as before, differences are noted here.
 * New options in the lobby config menu for DeathLink and accent color choice.
     * Accent color is the color of your location check bar. It's customizable now!
-    * DeathLink NOT currently implemented.
+* DeathLink implementation. Enable it from the host settings menu.
 
 REMOVED FEATURES:
 * Auto reconnection. I will probably try to re-implement this at another time.

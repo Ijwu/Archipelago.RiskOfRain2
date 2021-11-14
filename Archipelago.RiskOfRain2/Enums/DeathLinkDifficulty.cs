@@ -5,6 +5,7 @@
         Drizzle,
         Rainstorm,
         Monsoon,
-        Typhoon
+        Typhoon,
+        AHAHAHAHAHA
     }
 }

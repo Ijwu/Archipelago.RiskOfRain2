@@ -21,6 +21,7 @@ namespace Archipelago.RiskOfRain2
         public ReceivedItemsHandler Items { get; private set; }
         public LocationChecksHandler Locations { get; private set; }
         public UIModuleHandler UI { get; private set; }
+        public DeathLinkHandler DeathLink { get; private set; }
         public Color AccentColor { get; private set; }
         public bool ClientSideMode { get; private set; }
 
@@ -60,6 +61,7 @@ namespace Archipelago.RiskOfRain2
 
             if (enableDeathLink)
             {
+                tags = tags ?? new List<string>();
                 tags.Add("DeathLink");
             }
 
@@ -77,9 +79,12 @@ namespace Archipelago.RiskOfRain2
 
             HandleLoginSuccessful(loginResult as LoginSuccessful);
 
+            Log.LogDebug($"Connection successful. DeathLink? {enableDeathLink}");
             if (enableDeathLink)
             {
                 deathLinkService = Session.CreateDeathLinkServiceAndEnable();
+                DeathLink = new DeathLinkHandler(deathLinkService, deathlinkDifficulty);
+                DeathLink.Hook();
             }
 
             ChatMessage.SendColored($"Succesfully connected to Archipelago at {hostname}:{port} for slot {slotName}.", Color.green);
@@ -131,9 +136,10 @@ namespace Archipelago.RiskOfRain2
 
         private void UnhookEverything()
         {
-            Items.Unhook();
-            Locations.Unhook();
-            UI.Unhook();
+            Items?.Unhook();
+            Locations?.Unhook();
+            UI?.Unhook();
+            DeathLink?.Unhook();
         }
 
         private void Socket_PacketReceived(ArchipelagoPacketBase packet)

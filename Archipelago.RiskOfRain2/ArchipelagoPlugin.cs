@@ -89,14 +89,15 @@ namespace Archipelago.RiskOfRain2
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
                 AP.SetAccentColor(accentColor);
                 Log.LogDebug($"Was network server active? {NetworkServer.active} Is local client active? {NetworkServer.localClientActive} Is network client active? {NetworkClient.active} Is in multiplayer? {RoR2Application.isInMultiPlayer} Is in singleplayer? {RoR2Application.isInSinglePlayer}");
+                Log.LogDebug($"Is deathlink option selected? {enableDeathlink} Difficulty: {deathlinkDifficulty}");
                 if (isHostOrSingleplayer)
                 {
-                    isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
-
                     if (enableDeathlink)
                     {
                         AP.EnableDeathLink(deathlinkDifficulty);
                     }
+
+                    isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
                 }
                 else if (isMultiplayerClient)
                 {
