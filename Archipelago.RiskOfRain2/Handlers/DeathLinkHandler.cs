@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
@@ -38,6 +39,17 @@ namespace Archipelago.RiskOfRain2.Handlers
         public void Hook()
         {
             deathLink.OnDeathLinkReceived += DeathLink_OnDeathLinkReceived;
+            On.RoR2.CharacterMaster.OnBodyDeath += CharacterMaster_OnBodyDeath;
+        }
+
+        private void CharacterMaster_OnBodyDeath(On.RoR2.CharacterMaster.orig_OnBodyDeath orig, CharacterMaster self, CharacterBody body)
+        {
+            if (PlayerCharacterMasterController.instances.Select(x => x.master).Contains(self))
+            {
+                deathLink.SendDeathLink(new DeathLink(body.GetDisplayName()));
+            }
+
+            orig(self, body);
         }
 
         public void Unhook()

@@ -22,6 +22,7 @@ namespace Archipelago.RiskOfRain2
         public LocationChecksHandler Locations { get; private set; }
         public UIModuleHandler UI { get; private set; }
         public DeathLinkHandler DeathLink { get; private set; }
+        public GameOverHandler GameOver { get; set; }
         public Color AccentColor { get; private set; }
         public bool ClientSideMode { get; private set; }
 
@@ -40,6 +41,7 @@ namespace Archipelago.RiskOfRain2
             Session = null;
             Items = null;
             Locations = null;
+            GameOver = null;
 
             UI.Hook();
         }
@@ -56,6 +58,7 @@ namespace Archipelago.RiskOfRain2
             Session = ArchipelagoSessionFactory.CreateSession(hostname, port);
             Items = new ReceivedItemsHandler(Session.Items);
             Locations = new LocationChecksHandler(Session.Locations);
+            GameOver = new GameOverHandler(Session.Socket);
             Session.Socket.SocketClosed += Socket_SocketClosed;
             Session.Socket.PacketReceived += Socket_PacketReceived;
 
@@ -68,6 +71,7 @@ namespace Archipelago.RiskOfRain2
             Items.Hook();
             Locations.Hook();
             UI.Hook();
+            GameOver.Hook();
 
             var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password);
             if (!loginResult.Successful)
@@ -140,6 +144,7 @@ namespace Archipelago.RiskOfRain2
             Locations?.Unhook();
             UI?.Unhook();
             DeathLink?.Unhook();
+            GameOver?.Unhook();
         }
 
         private void Socket_PacketReceived(ArchipelagoPacketBase packet)
