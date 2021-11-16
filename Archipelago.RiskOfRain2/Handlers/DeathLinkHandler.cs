@@ -46,7 +46,7 @@ namespace Archipelago.RiskOfRain2.Handlers
         {
             if (PlayerCharacterMasterController.instances.Select(x => x.master).Contains(self))
             {
-                deathLink.SendDeathLink(new DeathLink(body.GetDisplayName()));
+                deathLink.SendDeathLink(new DeathLink(self.playerCharacterMasterController.GetDisplayName()));
             }
 
             orig(self, body);
