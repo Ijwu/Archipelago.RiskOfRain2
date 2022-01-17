@@ -81,6 +81,7 @@ namespace Archipelago.RiskOfRain2
                 return false;
             }
 
+            TeardownClientsideMode();
             HandleLoginSuccessful(loginResult as LoginSuccessful);
 
             Log.LogDebug($"Connection successful. DeathLink? {enableDeathLink}");

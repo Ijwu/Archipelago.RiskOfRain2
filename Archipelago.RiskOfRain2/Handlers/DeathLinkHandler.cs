@@ -114,7 +114,7 @@ namespace Archipelago.RiskOfRain2.Handlers
             foreach (PlayerCharacterMasterController playerCharacterMaster in instances)
             {
                 var itemToRemove = playerCharacterMaster.master.inventory.itemAcquisitionOrder.Choice();
-                DirectMessage.SendDirectMessage($"You lost a single ${Language.GetString(ItemCatalog.GetItemDef(itemToRemove).nameToken)}", playerCharacterMaster.networkUser);
+                DirectMessage.SendDirectMessage($"You lost a single {Language.GetString(ItemCatalog.GetItemDef(itemToRemove).nameToken)}.", playerCharacterMaster.networkUser);
                 playerCharacterMaster.master.inventory.RemoveItem(itemToRemove);
             }
         }

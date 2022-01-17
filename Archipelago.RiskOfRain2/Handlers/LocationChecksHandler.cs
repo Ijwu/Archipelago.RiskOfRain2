@@ -60,6 +60,7 @@ namespace Archipelago.RiskOfRain2.Handlers
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.TeamDeath.artifactIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.WeakAssKnees.artifactIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.WispOnDeath.artifactIndex),
+                PickupCatalog.FindPickupIndex(RoR2Content.Items.TitanGoldDuringTP.itemIndex),
             };
         }
 

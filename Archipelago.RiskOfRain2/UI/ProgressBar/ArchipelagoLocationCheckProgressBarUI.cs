@@ -36,7 +36,6 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
 
         public void Disable()
         {
-            hud = null;
             SyncLocationCheckProgress.OnLocationSynced -= SyncLocationCheckProgress_LocationSynced;
 
             if (!client.ClientSideMode)
