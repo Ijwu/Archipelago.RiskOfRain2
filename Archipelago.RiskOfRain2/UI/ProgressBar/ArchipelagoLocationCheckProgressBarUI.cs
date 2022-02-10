@@ -12,13 +12,13 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
         public int ItemPickupStep { get; set; }
         public int CurrentItemCount { get; set; }
 
-        private ArchipelagoClient client;
+        private ArchipelagoOrchestrator client;
         private HUD hud;
         private ArchipelagoLocationCheckProgressBarController locationCheckBar;
         private GameObject container;
 
 
-        public void Enable(HUD hud, ArchipelagoClient client)
+        public void Enable(HUD hud, ArchipelagoOrchestrator client)
         {
             this.client = client;
             this.hud = hud;
@@ -44,7 +44,7 @@ namespace Archipelago.RiskOfRain2.UI.ProgressBar
             }
 
             container.SetActive(false);
-            UnityEngine.Object.Destroy(container);
+            Object.Destroy(container);
         }
 
         private void SyncLocationCheckProgress_LocationSynced(int count, int step)

@@ -10,9 +10,9 @@ namespace Archipelago.RiskOfRain2.Handlers
     {
         private List<Type> uiModuleTypes = new List<Type>();
         private List<IUIModule> uiModules = new List<IUIModule>();
-        private readonly ArchipelagoClient client;
+        private readonly ArchipelagoOrchestrator client;
 
-        public UIModuleHandler(ArchipelagoClient client)
+        public UIModuleHandler(ArchipelagoOrchestrator client)
         {
             uiModuleTypes = Assembly.GetExecutingAssembly().GetTypes().ToList().Where(x => x != typeof(IUIModule) && typeof(IUIModule).IsAssignableFrom(x)).ToList();
 
@@ -22,12 +22,14 @@ namespace Archipelago.RiskOfRain2.Handlers
 
         public void Hook()
         {
+            Log.LogDebug("Hooking UI.");
             On.RoR2.UI.HUD.OnEnable += HUD_OnEnable;
             On.RoR2.UI.HUD.OnDisable += HUD_OnDisable;
         }
 
         public void Unhook()
         {
+            Log.LogDebug("Unhooking UI");
             On.RoR2.UI.HUD.OnEnable -= HUD_OnEnable;
             On.RoR2.UI.HUD.OnDisable -= HUD_OnDisable;
         }

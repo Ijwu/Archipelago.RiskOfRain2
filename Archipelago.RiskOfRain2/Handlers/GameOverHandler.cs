@@ -28,7 +28,7 @@ namespace Archipelago.RiskOfRain2.Handlers
         private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
             var acceptableEndings = new[] { RoR2Content.GameEndings.MainEnding, RoR2Content.GameEndings.ObliterationEnding, RoR2Content.GameEndings.LimboEnding };
-            var isAcceptableEnding = acceptableEndings.Contains(gameEndingDef) || 
+            var isAcceptableEnding = acceptableEndings.Contains(gameEndingDef) ||
                                     (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "moon2") ||
                                     (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "limbo");
 

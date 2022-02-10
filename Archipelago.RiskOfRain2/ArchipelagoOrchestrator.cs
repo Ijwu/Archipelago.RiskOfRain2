@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
 {
-    internal class ArchipelagoClient
+    internal class ArchipelagoOrchestrator
     {
         public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
         public event ClientDisconnected OnClientDisconnect;
@@ -30,7 +30,7 @@ namespace Archipelago.RiskOfRain2
         private DeathLinkDifficulty deathlinkDifficulty;
         private DeathLinkService deathLinkService;
 
-        public ArchipelagoClient()
+        public ArchipelagoOrchestrator()
         {
             UI = new UIModuleHandler(this);
         }
@@ -54,7 +54,8 @@ namespace Archipelago.RiskOfRain2
 
         public bool Connect(string hostname, int port, string slotName, string password = null, List<string> tags = null)
         {
-            Log.LogDebug($"Attempting connection to new session. Host: {hostname}:{port} Slot: {slotName}");
+            Log.LogDebug($"Attempting connection to new session. Host: '{hostname}:{port}' Slot: '{slotName}'");
+            TeardownClientsideMode();
             Session = ArchipelagoSessionFactory.CreateSession(hostname, port);
             Items = new ReceivedItemsHandler(Session.Items);
             Locations = new LocationChecksHandler(Session.Locations);
@@ -73,7 +74,7 @@ namespace Archipelago.RiskOfRain2
             UI.Hook();
             GameOver.Hook();
 
-            var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), tags, Guid.NewGuid().ToString(), password);
+            var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), ItemsHandlingFlags.AllItems, tags, Guid.NewGuid().ToString(), password);
             if (!loginResult.Successful)
             {
                 ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
@@ -81,10 +82,9 @@ namespace Archipelago.RiskOfRain2
                 return false;
             }
 
-            TeardownClientsideMode();
             HandleLoginSuccessful(loginResult as LoginSuccessful);
 
-            Log.LogDebug($"Connection successful. DeathLink? {enableDeathLink}");
+            Log.LogDebug($"Connection successful. DeathLink? '{enableDeathLink}'");
             if (enableDeathLink)
             {
                 deathLinkService = Session.CreateDeathLinkServiceAndEnable();
@@ -115,7 +115,7 @@ namespace Archipelago.RiskOfRain2
         {
             AccentColor = accentColor;
 
-            Log.LogDebug($"Accent Color set to: {accentColor.r} {accentColor.g} {accentColor.b} {accentColor.a}");
+            Log.LogDebug($"Accent Color set to: '{accentColor.r} {accentColor.g} {accentColor.b} {accentColor.a}'");
         }
 
         private void HandleLoginSuccessful(LoginSuccessful loginSuccessful)
@@ -129,7 +129,7 @@ namespace Archipelago.RiskOfRain2
 
         private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
         {
-            Log.LogDebug($"Socket was disconnected. ({e.Code}) {e.Reason} (Clean? {e.WasClean})");
+            Log.LogDebug($"Socket was disconnected. '({e.Code}) {e.Reason} (Clean? {e.WasClean})'");
 
             if (OnClientDisconnect != null)
             {
@@ -150,7 +150,7 @@ namespace Archipelago.RiskOfRain2
 
         private void Socket_PacketReceived(ArchipelagoPacketBase packet)
         {
-            Log.LogDebug($"Received a packet of type: {packet.PacketType}");
+            Log.LogDebug($"Received a packet of type: '{packet.PacketType}'");
             switch (packet)
             {
                 case PrintPacket printPacket:

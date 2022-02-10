@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Enums;
 using Archipelago.RiskOfRain2.Net;
@@ -6,6 +7,8 @@ using Archipelago.RiskOfRain2.UI.Objectives;
 using BepInEx;
 using BepInEx.Bootstrap;
 using InLobbyConfig.Fields;
+using Mono.Cecil.Cil;
+using MonoMod.Cil;
 using R2API;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
@@ -28,14 +31,14 @@ namespace Archipelago.RiskOfRain2
         public const string PluginName = "Archipelago";
         public const string PluginVersion = "2.0";
 
-        private ArchipelagoClient AP;
+        private ArchipelagoOrchestrator AP;
         private bool isPlayingAP = false;
 
-        private bool isInLobbyConfigLoaded = false;
+        //TODO: reset these defaults to something resonable for release
         private string apServerUri = "localhost";
         private int apServerPort = 38281;
         private bool willConnectToAP = true;
-        private string apSlotName = "";
+        private string apSlotName = "ijwu";
         private string apPassword;
         private Color accentColor;
 
@@ -52,13 +55,17 @@ namespace Archipelago.RiskOfRain2
         {
             Log.Init(Logger);
 
-            AP = new ArchipelagoClient();
+            AP = new ArchipelagoOrchestrator();
 
-            isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
+            var isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
 
             if (isInLobbyConfigLoaded)
             {
                 CreateInLobbyMenu();
+            }
+            else
+            {
+                Log.LogError("Cannot find InLobbyConfig mod, Archipelago menu will not be present.");
             }
 
             NetworkingAPI.RegisterMessageType<SyncLocationCheckProgress>();
@@ -67,27 +74,37 @@ namespace Archipelago.RiskOfRain2
 
             CommandHelper.AddToConsoleWhenReady();
 
-            Run.onRunStartGlobal += Run_onRunStartGlobal;
+            On.RoR2.Run.Start += Run_onRunStartGlobal;
             On.RoR2.Run.OnDestroy += Run_OnDestroy;
 
             accentColor = new Color(.8f, .5f, 1, 1);
 
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
             ArchipelagoChatMessage.OnChatReceivedFromClient += SendChatToAP;
+
+            //todo: remove debug
+            On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
+            IL.RoR2.UI.ConsoleWindow.CheckConsoleKey += ChangeConsoleKey;
         }
 
-        private void Run_onRunStartGlobal(Run obj)
+        private void ChangeConsoleKey(ILContext il)
+        {
+            var cursor = new ILCursor(il);
+            cursor.IL.Replace(cursor.Instrs[0], Instruction.Create(OpCodes.Ldc_I4_S, (sbyte)50));
+        }
+
+        private void Run_onRunStartGlobal(On.RoR2.Run.orig_Start orig, Run obj)
         {
             isHostOrSingleplayer = CheckIsHostOrSingleplayer();
             isMultiplayerClient = CheckIsMultiplayerClient();
 
-            Log.LogDebug($"Run was started. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
+            Log.LogDebug($"Run is starting. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
             if (willConnectToAP)
             {
                 ArchipelagoTotalChecksObjectiveController.AddObjective();
                 AP.SetAccentColor(accentColor);
-                Log.LogDebug($"Was network server active? {NetworkServer.active} Is local client active? {NetworkServer.localClientActive} Is network client active? {NetworkClient.active} Is in multiplayer? {RoR2Application.isInMultiPlayer} Is in singleplayer? {RoR2Application.isInSinglePlayer}");
-                Log.LogDebug($"Is deathlink option selected? {enableDeathlink} Difficulty: {deathlinkDifficulty}");
+                Log.LogDebug($"Was network server active? '{NetworkServer.active}' Is local client active? '{NetworkServer.localClientActive}' Is network client active? '{NetworkClient.active}' Is in multiplayer? '{RoR2Application.isInMultiPlayer}' Is in singleplayer? '{RoR2Application.isInSinglePlayer}' Is multiplayer client? '{isMultiplayerClient}'");
+                Log.LogDebug($"Is deathlink option selected? '{enableDeathlink}' Difficulty: '{deathlinkDifficulty}'");
                 if (isHostOrSingleplayer)
                 {
                     if (enableDeathlink)
@@ -95,7 +112,10 @@ namespace Archipelago.RiskOfRain2
                         AP.EnableDeathLink(deathlinkDifficulty);
                     }
 
+                    orig(obj);
+
                     isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
+                    return;
                 }
                 else if (isMultiplayerClient)
                 {
@@ -103,6 +123,8 @@ namespace Archipelago.RiskOfRain2
                     AP.SetupClientsideMode();
                 }
             }
+
+            orig(obj);
         }
 
         private void Run_OnDestroy(On.RoR2.Run.orig_OnDestroy orig, Run self)
