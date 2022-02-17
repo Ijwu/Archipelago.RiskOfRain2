@@ -29,8 +29,8 @@ namespace Archipelago.RiskOfRain2.Handlers
         {
             var acceptableEndings = new[] { RoR2Content.GameEndings.MainEnding, RoR2Content.GameEndings.ObliterationEnding, RoR2Content.GameEndings.LimboEnding };
             var isAcceptableEnding = acceptableEndings.Contains(gameEndingDef) ||
-                                    (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "moon2") ||
-                                    (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "limbo");
+                                    (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName.StartsWith("moon")) ||
+                                    (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName.StartsWith("limbo"));
 
             // Are we in commencement or have we obliterated or have we finished (or lost in) 'a moment, whole'?
             if (isAcceptableEnding)
