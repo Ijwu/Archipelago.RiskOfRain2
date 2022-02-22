@@ -14,8 +14,11 @@ using R2API.Networking;
 using R2API.Networking.Interfaces;
 using R2API.Utils;
 using RoR2;
+using RoR2.UI;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 namespace Archipelago.RiskOfRain2
 {
@@ -81,10 +84,47 @@ namespace Archipelago.RiskOfRain2
 
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
             ArchipelagoChatMessage.OnChatReceivedFromClient += SendChatToAP;
+            On.RoR2.UI.CharacterSelectController.Awake += OnCharacterSelectAwake;
 
             //todo: remove debug
             On.RoR2.Networking.GameNetworkManager.OnClientConnect += (self, user, t) => { };
             IL.RoR2.UI.ConsoleWindow.CheckConsoleKey += ChangeConsoleKey;
+        }
+
+        private void OnCharacterSelectAwake(On.RoR2.UI.CharacterSelectController.orig_Awake orig, RoR2.UI.CharacterSelectController self)
+        {
+            orig(self);
+            var isHost = CheckIsHostOrSingleplayer();
+            if (isHost)
+            {
+                var apButton = ConstructArchipelagoButton();
+                var parentPanelTransform = GameObject.Find("CharacterSelectUI/SafeArea/FooterPanel/").transform;
+                apButton.transform.SetParent(parentPanelTransform);
+                var apButtonRect = apButton.GetComponent<RectTransform>();
+                apButtonRect.anchoredPosition = Vector2.zero;
+                apButtonRect.anchoredPosition3D = Vector3.zero;
+                apButtonRect.anchorMax = new Vector2(.6f, 1f);
+                apButtonRect.anchorMin = new Vector2(.5f, 0f);
+                apButton.transform.localPosition = new Vector3(515f, 24f, 0f);
+                apButton.transform.localScale = Vector3.one;
+            }
+        }
+
+        private GameObject ConstructArchipelagoButton()
+        {
+            GameObject menuButton = GameObject.Find("GenericMenuButton (Loadout)").InstantiateClone("Archipelago Connect Button");
+            var buttonTextObject = menuButton.transform.Find("ButtonText");
+            var textComponent = buttonTextObject.GetComponent<HGTextMeshProUGUI>();
+            textComponent.SetText("Connect to AP");
+            
+            var imageObject = menuButton.GetComponent<Image>();
+            imageObject.color = new Color(0.3767f, 0.8971f, 0.2111f, 1);
+
+            var buttonObject = menuButton.GetComponent<Button>();
+            buttonObject.onClick.AddListener(new UnityAction(ConnectToArchipelago));
+
+            menuButton.transform.localScale = new Vector3(1f, 1f, 1f);
+            return menuButton;
         }
 
         private void ChangeConsoleKey(ILContext il)
@@ -95,36 +135,53 @@ namespace Archipelago.RiskOfRain2
 
         private void Run_onRunStartGlobal(On.RoR2.Run.orig_Start orig, Run obj)
         {
+            if (!isPlayingAP && willConnectToAP)
+            {
+                ConnectToArchipelago();
+            }
+
+            Log.LogDebug($"Run is starting. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
+            Log.LogDebug($"Was network server active? '{NetworkServer.active}' Is local client active? '{NetworkServer.localClientActive}' Is network client active? '{NetworkClient.active}' Is in multiplayer? '{RoR2Application.isInMultiPlayer}' Is in singleplayer? '{RoR2Application.isInSinglePlayer}' Is multiplayer client? '{isMultiplayerClient}'");
+            Log.LogDebug($"Is deathlink option selected? '{enableDeathlink}' Difficulty: '{deathlinkDifficulty}'");
+            orig(obj);
+
+            if (!isPlayingAP && willConnectToAP)
+            { 
+                if (CheckIsHostOrSingleplayer())
+                {
+                    AP.HookEverything();    
+                }
+            }
+        }
+
+        private void ConnectToArchipelago()
+        {
             isHostOrSingleplayer = CheckIsHostOrSingleplayer();
             isMultiplayerClient = CheckIsMultiplayerClient();
 
-            Log.LogDebug($"Run is starting. Will connect to AP? {willConnectToAP} Is connected to AP? {isPlayingAP}");
-            if (willConnectToAP)
+            
+            if (!willConnectToAP)
             {
-                ArchipelagoTotalChecksObjectiveController.AddObjective();
-                AP.SetAccentColor(accentColor);
-                Log.LogDebug($"Was network server active? '{NetworkServer.active}' Is local client active? '{NetworkServer.localClientActive}' Is network client active? '{NetworkClient.active}' Is in multiplayer? '{RoR2Application.isInMultiPlayer}' Is in singleplayer? '{RoR2Application.isInSinglePlayer}' Is multiplayer client? '{isMultiplayerClient}'");
-                Log.LogDebug($"Is deathlink option selected? '{enableDeathlink}' Difficulty: '{deathlinkDifficulty}'");
-                if (isHostOrSingleplayer)
-                {
-                    if (enableDeathlink)
-                    {
-                        AP.EnableDeathLink(deathlinkDifficulty);
-                    }
-
-                    orig(obj);
-
-                    isPlayingAP = AP.Connect(apServerUri, apServerPort, apSlotName, apPassword);
-                    return;
-                }
-                else if (isMultiplayerClient)
-                {
-                    isPlayingAP = true;
-                    AP.SetupClientsideMode();
-                }
+                ChatMessage.SendColored($"Cannot connect to Archipelago. Please enable the setting in your lobby config.", Color.red);
+                return;
             }
 
-            orig(obj);
+            ArchipelagoTotalChecksObjectiveController.AddObjective();
+            AP.SetAccentColor(accentColor);
+            if (isHostOrSingleplayer)
+            {
+                if (enableDeathlink)
+                {
+                    AP.EnableDeathLink(deathlinkDifficulty);
+                }
+
+                isPlayingAP = AP.Login(apServerUri, apServerPort, apSlotName, apPassword);
+            }
+            else if (isMultiplayerClient)
+            {
+                isPlayingAP = true;
+                AP.SetupClientsideMode();
+            }
         }
 
         private void Run_OnDestroy(On.RoR2.Run.orig_OnDestroy orig, Run self)
@@ -153,29 +210,6 @@ namespace Archipelago.RiskOfRain2
             isMultiplayerClient = false;
 
             orig(self);
-        }
-
-        private void Run_onRunDestroyGlobal(Run obj)
-        {
-            Log.LogDebug($"Run was destroyed. Is connected to AP? {isPlayingAP}. Is socket connected? {AP?.Session?.Socket?.Connected}");
-            Log.LogDebug($"IsHostOrSingleplayer: {CheckIsHostOrSingleplayer()} IsMultiplayerClient: {CheckIsMultiplayerClient()}");
-            Log.LogDebug($"NetworkServer.Active: {NetworkServer.active} IsInMultiplayer: {RoR2Application.isInMultiPlayer} IsInSingleplayer: {RoR2Application.isInSinglePlayer}");
-            if (isPlayingAP || (AP.Session != null && AP.Session.Socket.Connected))
-            {
-                if (CheckIsHostOrSingleplayer())
-                {
-                    Log.LogDebug("Run was destroyed. Disconnecting.");
-                    AP.Disconnect();
-                } 
-                else if (CheckIsMultiplayerClient())
-                {
-                    Log.LogDebug("Run was destroyed. Tearing down clientside mode.");
-                    AP.TeardownClientsideMode();
-                }
-
-                isPlayingAP = false;
-                ArchipelagoTotalChecksObjectiveController.RemoveObjective();
-            }
         }
 
         private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, RoR2.UI.ChatBox self)

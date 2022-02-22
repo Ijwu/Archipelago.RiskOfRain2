@@ -8,6 +8,7 @@ using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Enums;
 using Archipelago.RiskOfRain2.Handlers;
 using R2API.Utils;
+using RoR2;
 using UnityEngine;
 
 namespace Archipelago.RiskOfRain2
@@ -52,7 +53,7 @@ namespace Archipelago.RiskOfRain2
             UI.Unhook();
         }
 
-        public bool Connect(string hostname, int port, string slotName, string password = null, List<string> tags = null)
+        public bool Login(string hostname, int port, string slotName, string password = null, List<string> tags = null)
         {
             Log.LogDebug($"Attempting connection to new session. Host: '{hostname}:{port}' Slot: '{slotName}'");
             TeardownClientsideMode();
@@ -69,16 +70,10 @@ namespace Archipelago.RiskOfRain2
                 tags.Add("DeathLink");
             }
 
-            Items.Hook();
-            Locations.Hook();
-            UI.Hook();
-            GameOver.Hook();
-
             var loginResult = Session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0, 2, 0), ItemsHandlingFlags.AllItems, tags, Guid.NewGuid().ToString(), password);
             if (!loginResult.Successful)
             {
                 ChatMessage.SendColored($"Failed to connect to Archipelago at {hostname}:{port} for slot {slotName}. Restart your run to try again. (Sorry)", Color.red);
-                UnhookEverything();
                 return false;
             }
 
@@ -89,11 +84,19 @@ namespace Archipelago.RiskOfRain2
             {
                 deathLinkService = Session.CreateDeathLinkServiceAndEnable();
                 DeathLink = new DeathLinkHandler(deathLinkService, deathlinkDifficulty);
-                DeathLink.Hook();
             }
 
             ChatMessage.SendColored($"Succesfully connected to Archipelago at {hostname}:{port} for slot {slotName}.", Color.green);
             return true;
+        }
+
+        public void HookEverything()
+        {
+            Items.Hook();
+            Locations.Hook();
+            UI.Hook();
+            GameOver.Hook();
+            DeathLink.Hook();
         }
 
         public void Disconnect()
@@ -123,6 +126,8 @@ namespace Archipelago.RiskOfRain2
             var itemPickupStep = Convert.ToInt32(loginSuccessful.SlotData["itemPickupStep"]) + 1;
             var totalChecks = loginSuccessful.LocationsChecked.Length + loginSuccessful.MissingChecks.Length;
             var currentChecks = loginSuccessful.LocationsChecked.Length;
+
+            PreGameController.instance.runSeed = ulong.Parse(loginSuccessful.SlotData["seed"].ToString());
 
             Locations.SetCheckCounts(totalChecks, itemPickupStep, currentChecks);
         }
