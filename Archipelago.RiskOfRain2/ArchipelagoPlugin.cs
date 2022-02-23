@@ -91,7 +91,7 @@ namespace Archipelago.RiskOfRain2
             IL.RoR2.UI.ConsoleWindow.CheckConsoleKey += ChangeConsoleKey;
         }
 
-        private void OnCharacterSelectAwake(On.RoR2.UI.CharacterSelectController.orig_Awake orig, RoR2.UI.CharacterSelectController self)
+        private void OnCharacterSelectAwake(On.RoR2.UI.CharacterSelectController.orig_Awake orig, CharacterSelectController self)
         {
             orig(self);
             var isHost = CheckIsHostOrSingleplayer();

@@ -1,5 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.RiskOfRain2.Extensions;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI.Objectives;
 using R2API;
@@ -24,6 +26,7 @@ namespace Archipelago.RiskOfRain2.Handlers
         public int TotalChecks { get; private set; }
         public int CurrentChecks { get; private set; }
         public int PickedUpItemCount { get; private set; }
+        public int[] MissingChecks { get; private set; }
         public int ItemPickupStep { get; private set; }
 
         public LocationChecksHandler(LocationCheckHelper helper)
@@ -69,17 +72,18 @@ namespace Archipelago.RiskOfRain2.Handlers
             return helper.GetLocationNameFromId(id);
         }
 
-        public void SetCheckCounts(int totalChecks, int pickupStep, int currentChecks)
+        public void SetCheckCounts(int totalChecks, int pickupStep, int[] currentChecks, int[] missingChecks)
         {
             TotalChecks = totalChecks;
             ItemPickupStep = pickupStep;
-            CurrentChecks = currentChecks;
-            PickedUpItemCount = currentChecks * pickupStep;
+            CurrentChecks = currentChecks.Length;
+            PickedUpItemCount = currentChecks.Length * pickupStep;
+            MissingChecks = missingChecks;
 
-            ArchipelagoTotalChecksObjectiveController.CurrentChecks = currentChecks;
+            ArchipelagoTotalChecksObjectiveController.CurrentChecks = currentChecks.Length;
             ArchipelagoTotalChecksObjectiveController.TotalChecks = totalChecks;
 
-            if (totalChecks == currentChecks)
+            if (totalChecks == currentChecks.Length)
             {
                 ArchipelagoTotalChecksObjectiveController.RemoveObjective();
                 ChatMessage.SendColored("All location checks already completed for this slot.", Color.yellow);
@@ -151,8 +155,11 @@ namespace Archipelago.RiskOfRain2.Handlers
                     finishedAllChecks = true;
                 }
 
-                var itemSendName = $"ItemPickup{CurrentChecks}";
-                var itemLocationId = helper.GetLocationIdFromName(ArchipelagoPlugin.GameName, itemSendName);
+                var itemLocationId = MissingChecks.Choice();
+                var itemSendName = helper.GetLocationNameFromId(itemLocationId);
+                var buffer = MissingChecks.ToList();
+                buffer.Remove(itemLocationId);
+                MissingChecks = buffer.ToArray();
                 Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");
 
                 helper.CompleteLocationChecks(itemLocationId);

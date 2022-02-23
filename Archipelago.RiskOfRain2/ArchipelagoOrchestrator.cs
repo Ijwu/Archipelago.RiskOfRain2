@@ -125,11 +125,12 @@ namespace Archipelago.RiskOfRain2
         {
             var itemPickupStep = Convert.ToInt32(loginSuccessful.SlotData["itemPickupStep"]) + 1;
             var totalChecks = loginSuccessful.LocationsChecked.Length + loginSuccessful.MissingChecks.Length;
-            var currentChecks = loginSuccessful.LocationsChecked.Length;
+            var completedChecks = loginSuccessful.LocationsChecked;
+            var missingChecks = loginSuccessful.MissingChecks;
 
             PreGameController.instance.runSeed = ulong.Parse(loginSuccessful.SlotData["seed"].ToString());
 
-            Locations.SetCheckCounts(totalChecks, itemPickupStep, currentChecks);
+            Locations.SetCheckCounts(totalChecks, itemPickupStep, completedChecks, missingChecks);
         }
 
         private void Socket_SocketClosed(WebSocketSharp.CloseEventArgs e)
