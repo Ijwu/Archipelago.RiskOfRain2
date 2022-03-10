@@ -22,6 +22,9 @@
     <Reference Include="BepInEx">
       <HintPath>..\DLLs\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="com.unity.multiplayer-hlapi.Runtime">
+      <HintPath>..\DLLs\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="Facepunch.Steamworks">
       <HintPath>..\DLLs\Facepunch.Steamworks.dll</HintPath>
     </Reference>
@@ -43,8 +46,14 @@
     <Reference Include="ModLoader">
       <HintPath>..\DLLs\ModLoader.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\DLLs\Mono.Cecil.dll</HintPath>
+    </Reference>
     <Reference Include="Mono.Security">
       <HintPath>..\DLLs\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMod.Utils">
+      <HintPath>..\DLLs\MonoMod.Utils.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\DLLs\Newtonsoft.Json.dll</HintPath>
@@ -70,8 +79,14 @@
     <Reference Include="Rewired_CSharp">
       <HintPath>..\DLLs\Rewired_CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Rewired_Windows">
+      <HintPath>..\DLLs\Rewired_Windows.dll</HintPath>
+    </Reference>
     <Reference Include="Rewired_Windows_Lib">
       <HintPath>..\DLLs\Rewired_Windows_Lib.dll</HintPath>
+    </Reference>
+    <Reference Include="RoR2">
+      <HintPath>..\DLLs\RoR2.dll</HintPath>
     </Reference>
     <Reference Include="SimpleJSON">
       <HintPath>..\DLLs\SimpleJSON.dll</HintPath>
@@ -94,6 +109,9 @@
     <Reference Include="System.Xml.XPath.XDocument">
       <HintPath>..\DLLs\System.Xml.XPath.XDocument.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>..\DLLs\Unity.Addressables.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Postprocessing.Runtime">
       <HintPath>..\DLLs\Unity.Postprocessing.Runtime.dll</HintPath>
     </Reference>
@@ -102,6 +120,9 @@
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
       <HintPath>..\DLLs\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>..\DLLs\Unity.ResourceManager.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>..\DLLs\Unity.TextMeshPro.dll</HintPath>
@@ -175,9 +196,6 @@
     <Reference Include="UnityEngine.LocalizationModule">
       <HintPath>..\DLLs\UnityEngine.LocalizationModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.Networking">
-      <HintPath>..\DLLs\UnityEngine.Networking.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule">
       <HintPath>..\DLLs\UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
@@ -216,6 +234,9 @@
     </Reference>
     <Reference Include="UnityEngine.SubstanceModule">
       <HintPath>..\DLLs\UnityEngine.SubstanceModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.SubsystemsModule">
+      <HintPath>..\DLLs\UnityEngine.SubsystemsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TerrainModule">
       <HintPath>..\DLLs\UnityEngine.TerrainModule.dll</HintPath>

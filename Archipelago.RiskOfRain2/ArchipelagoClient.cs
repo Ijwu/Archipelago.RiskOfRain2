@@ -20,84 +20,51 @@ namespace Archipelago.RiskOfRain2
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
     public class ArchipelagoClient : IDisposable
     {
-        // Making this static is dirty, I know. But this is gamedev. Gamedev is a cesspool and you know it.
-        public static bool RecentlyReconnected = false;
-
         public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
         public event ClientDisconnected OnClientDisconnect;
 
-        public string LastServerUrl { get; set; }
-        public string SlotName
-        {
-            get
-            {
-                return connectPacket.Name;
-            }
-
-            set
-            {
-                connectPacket.Name = value;
-            }
-        }
-    
-        public string Password
-        {
-            get
-            {
-                return connectPacket.Password;
-            }
-
-            set
-            {
-                connectPacket.Password = value;
-            }
-        }
+        public Uri LastServerUrl { get; set; }
 
         public ArchipelagoItemLogicController ItemLogic;
         public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
 
         private ArchipelagoSession session;
-        private DataPackagePacket dataPackagePacket;
-        private ConnectedPacket connectedPacket;
-        private ConnectPacket connectPacket;
-
-        private Dictionary<int, string> playerNameById;        
-        private ulong seed;
-        
-        private bool reconnecting = false;
-
         public ArchipelagoClient()
         {
-            connectPacket = new ConnectPacket();
 
-            connectPacket.Game = "Risk of Rain 2";
-            connectPacket.Uuid = Guid.NewGuid().ToString();
-            connectPacket.Version = new Version(0, 1, 9);
-            connectPacket.Tags = new List<string> { "AP" };
         }
 
-        public void Connect(string url, string slotName, string password = null)
+        public void Connect(Uri url, string slotName, string password = null)
         {
+            ChatMessage.SendColored($"Attempting to connect to Archipelago at ${url}.", Color.green);
             Dispose();
 
-            connectPacket.Name = slotName;
-            connectPacket.Password = password;
             LastServerUrl = url;
 
-            session = new ArchipelagoSession(url);
+            session = ArchipelagoSessionFactory.CreateSession(url);
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
 
-            session.ConnectAsync();
+            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(2,0,0), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
 
-            session.PacketReceived += Session_PacketReceived;
-            session.SocketClosed += Session_SocketClosed;
-            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
-
-            if (reconnecting)
+            if (!result.Successful)
             {
+                LoginFailure failureResult = (LoginFailure)result;
+                foreach (var err in failureResult.Errors)
+                {
+                    ChatMessage.SendColored(err, Color.red);
+                    Log.LogError(err);
+                }
                 return;
             }
+
+            LoginSuccessful successResult = (LoginSuccessful)result;
+
+            LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
+
+            session.Socket.PacketReceived += Session_PacketReceived;
+            session.Socket.SocketClosed += Session_SocketClosed;
+            ItemLogic.OnItemDropProcessed += ItemLogicHandler_ItemDropProcessed;
 
             HookGame();
             new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
@@ -105,9 +72,9 @@ namespace Archipelago.RiskOfRain2
 
         public void Dispose()
         {
-            if (session != null && session.Connected)
+            if (session != null && session.Socket.Connected)
             {
-                session.Disconnect();
+                session.Socket.Disconnect();
             }
             
             if (ItemLogic != null)
@@ -125,18 +92,6 @@ namespace Archipelago.RiskOfRain2
             session = null;
         }
 
-        private void UpdatePlayerList(List<NetworkPlayer> players)
-        {
-            playerNameById = new Dictionary<int, string>
-            {
-                { 0, "Archipelago Server" }
-            };
-
-            foreach (var player in players)
-            {
-                playerNameById[player.Slot] = player.Name;
-            }
-        }
         private void HookGame()
         {
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
@@ -155,11 +110,11 @@ namespace Archipelago.RiskOfRain2
 
         private void ArchipelagoChatMessage_OnChatReceivedFromClient(string message)
         {
-            if (session.Connected && !string.IsNullOrEmpty(message))
+            if (session.Socket.Connected && !string.IsNullOrEmpty(message))
             {
                 var sayPacket = new SayPacket();
                 sayPacket.Text = message;
-                session.SendPacket(sayPacket);
+                session.Socket.SendPacket(sayPacket);
             }
         }
 
@@ -183,11 +138,11 @@ namespace Archipelago.RiskOfRain2
         private void ChatBox_SubmitChat(On.RoR2.UI.ChatBox.orig_SubmitChat orig, ChatBox self)
         {
             var text = self.inputField.text;
-            if (session.Connected && !string.IsNullOrEmpty(text))
+            if (session.Socket.Connected && !string.IsNullOrEmpty(text))
             {
                 var sayPacket = new SayPacket();
                 sayPacket.Text = text;
-                session.SendPacket(sayPacket);
+                session.Socket.SendPacket(sayPacket);
 
                 self.inputField.text = string.Empty;
                 orig(self);
@@ -209,64 +164,38 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        public IEnumerator AttemptConnection()
-        {
-            reconnecting = true;
-            var retryCounter = 0;
+        //public IEnumerator AttemptConnection()
+        //{
+        //    reconnecting = true;
+        //    var retryCounter = 0;
 
-            while ((session == null || !session.Connected)&& retryCounter < 5)
-            {
-                ChatMessage.Send($"Connection attempt #{retryCounter+1}");
-                retryCounter++;
-                yield return new WaitForSeconds(3f);
-                Connect(LastServerUrl, connectPacket.Name, connectPacket.Password);
-            }
+        //    while ((session == null || !session.Socket.Connected)&& retryCounter < 5)
+        //    {
+        //        ChatMessage.Send($"Connection attempt #{retryCounter+1}");
+        //        retryCounter++;
+        //        yield return new WaitForSeconds(3f);
+        //        Connect(LastServerUrl, connectPacket.Name, connectPacket.Password);
+        //    }
 
-            if (session == null || !session.Connected)
-            {
-                ChatMessage.SendColored("Could not connect to Archipelago.", Color.red);
-                Dispose();
-            }
-            else if (session != null && session.Connected)
-            {
-                ChatMessage.SendColored("Established Archipelago connection.", Color.green);
-                new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
-            }
+        //    if (session == null || !session.Socket.Connected)
+        //    {
+        //        ChatMessage.SendColored("Could not connect to Archipelago.", Color.red);
+        //        Dispose();
+        //    }
+        //    else if (session != null && session.Socket.Connected)
+        //    {
+        //        ChatMessage.SendColored("Established Archipelago connection.", Color.green);
+        //        new ArchipelagoStartMessage().Send(NetworkDestination.Clients);
+        //    }
 
-            reconnecting = false;
-            RecentlyReconnected = true;
-        }
+        //    reconnecting = false;
+        //    RecentlyReconnected = true;
+        //}
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
         {
             switch (packet.PacketType)
             {
-                case ArchipelagoPacketType.RoomInfo:
-                    {
-                        session.SendPacket(new GetDataPackagePacket());
-                        break;
-                    }
-                case ArchipelagoPacketType.ConnectionRefused:
-                    {
-                        var p = packet as ConnectionRefusedPacket;
-                        foreach (string err in p.Errors)
-                        {
-                            ChatMessage.SendColored(err, Color.red);
-                            Log.LogError(err);
-                        }
-                        break;
-                    }
-                case ArchipelagoPacketType.Connected:
-                    {
-                        connectedPacket = packet as ConnectedPacket;
-                        UpdatePlayerList(connectedPacket.Players);
-                        LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
-
-                        //TODO: perhaps fix seed setting
-                        seed = Convert.ToUInt64(connectedPacket.SlotData["seed"]);
-                        //On.RoR2.Run.Start += (orig, instance) => { instance.seed = seed; orig(instance); };
-                        break;
-                    }
                 case ArchipelagoPacketType.Print:
                     {
                         var printPacket = packet as PrintPacket;
@@ -281,22 +210,22 @@ namespace Archipelago.RiskOfRain2
                         {
                             switch (part.Type)
                             {
-                                case "player_id":
+                                case JsonMessagePartType.PlayerId:
                                     {
-                                        int player_id = int.Parse(part.Text);
-                                        text += playerNameById[player_id];
+                                        int playerId = int.Parse(part.Text);
+                                        text += session.Players.GetPlayerName(playerId);
                                         break;
                                     }
-                                case "item_id":
+                                case JsonMessagePartType.ItemId:
                                     {
-                                        int item_id = int.Parse(part.Text);
-                                        text += dataPackagePacket.DataPackage.ItemLookup[item_id];
+                                        int itemId = int.Parse(part.Text);
+                                        text += session.Items.GetItemName(itemId);
                                         break;
                                     }
-                                case "location_id":
+                                case JsonMessagePartType.LocationId:
                                     {
-                                        int location_id = int.Parse(part.Text);
-                                        text += dataPackagePacket.DataPackage.LocationLookup[location_id];
+                                        int locationId = int.Parse(part.Text);
+                                        text += session.Locations.GetLocationNameFromId(locationId);
                                         break;
                                     }
                                 default:
@@ -307,12 +236,6 @@ namespace Archipelago.RiskOfRain2
                             }
                         }
                         ChatMessage.Send(text);
-                        break;
-                    }
-                case ArchipelagoPacketType.DataPackage:
-                    {
-                        dataPackagePacket = packet as DataPackagePacket;
-                        session.SendPacket(connectPacket);
                         break;
                     }
             }
@@ -327,7 +250,7 @@ namespace Archipelago.RiskOfRain2
             {
                 var packet = new StatusUpdatePacket();
                 packet.Status = ArchipelagoClientState.ClientGoal;
-                session.SendPacket(packet);
+                session.Socket.SendPacket(packet);
 
                 new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
             }

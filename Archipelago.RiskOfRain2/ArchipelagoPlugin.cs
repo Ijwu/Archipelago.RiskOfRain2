@@ -48,7 +48,7 @@ namespace Archipelago.RiskOfRain2
             ArchipelagoStartMessage.OnArchipelagoSessionStart += ArchipelagoStartMessage_OnArchipelagoSessionStart;
             ArchipelagoEndMessage.OnArchipelagoSessionEnd += ArchipelagoEndMessage_OnArchipelagoSessionEnd;
             ArchipelagoConsoleCommand.OnArchipelagoCommandCalled += ArchipelagoConsoleCommand_ArchipelagoCommandCalled;
-            GameNetworkManager.onStopClientGlobal += GameNetworkManager_onStopClientGlobal;
+            NetworkManagerSystem.onStopClientGlobal += GameNetworkManager_onStopClientGlobal;
             On.RoR2.UI.ChatBox.SubmitChat += ChatBox_SubmitChat;
 
             isInLobbyConfigLoaded = Chainloader.PluginInfos.ContainsKey("com.KingEnderBrine.InLobbyConfig");
@@ -113,7 +113,7 @@ namespace Archipelago.RiskOfRain2
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
             if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
             {
-                StartCoroutine(AP.AttemptConnection());
+                //StartCoroutine(AP.AttemptConnection());
             }
         }
 
@@ -126,11 +126,8 @@ namespace Archipelago.RiskOfRain2
             uri.Host = url;
             uri.Port = port;
 
-            AP.LastServerUrl = uri.Uri.AbsoluteUri;
-            AP.SlotName = slot;
-            AP.Password = password;
-
-            StartCoroutine(AP.AttemptConnection());
+            AP.Connect(uri.Uri, slot, password);
+            //StartCoroutine(AP.AttemptConnection());
         }
 
         /// <summary>
@@ -156,7 +153,7 @@ namespace Archipelago.RiskOfRain2
                 uri.Host = apServerUri;
                 uri.Port = apServerPort;
                 
-                AP.Connect(uri.Uri.AbsoluteUri, apSlotName, apPassword);
+                AP.Connect(uri.Uri, apSlotName, apPassword);
             }
 
             if (isPlayingAP)
