@@ -27,4 +27,10 @@
     <None Remove="libs\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="InLobbyConfig">
+      <HintPath>DLLs\InLobbyConfig.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
