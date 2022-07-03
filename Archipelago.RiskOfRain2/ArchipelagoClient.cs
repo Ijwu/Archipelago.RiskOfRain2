@@ -29,6 +29,8 @@ namespace Archipelago.RiskOfRain2
         public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
 
         private ArchipelagoSession session;
+        private bool finalStageDeath = true;
+
         public ArchipelagoClient()
         {
 
@@ -59,6 +61,8 @@ namespace Archipelago.RiskOfRain2
             }
 
             LoginSuccessful successResult = (LoginSuccessful)result;
+            successResult.SlotData.TryGetValue("FinalStageDeath", out object stageDeathObject);
+            if (stageDeathObject != null) finalStageDeath = (bool) stageDeathObject;
 
             LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
 
@@ -256,6 +260,7 @@ namespace Archipelago.RiskOfRain2
 
         private bool IsEndingAcceptable(GameEndingDef gameEndingDef)
         {
+            // Acceptable ending types
             var acceptableEndings = new[] { 
                 RoR2Content.GameEndings.MainEnding, 
                 RoR2Content.GameEndings.ObliterationEnding, 
@@ -263,7 +268,15 @@ namespace Archipelago.RiskOfRain2
                 DLC1Content.GameEndings.VoidEnding 
             };
 
-            return (acceptableEndings.Contains(gameEndingDef)) || (gameEndingDef == RoR2Content.GameEndings.StandardLoss && (Stage.instance.sceneDef.baseSceneName == "moon2" || Stage.instance.sceneDef.baseSceneName == "voidraid"));
+            // Acceptable stages to die on
+            var acceptableLosses = new[]
+            {
+                "moon",
+                "moon2",
+                "voidraid"
+            };
+
+            return (acceptableEndings.Contains(gameEndingDef)) || ( finalStageDeath && gameEndingDef == RoR2Content.GameEndings.StandardLoss && acceptableLosses.Contains(Stage.instance.sceneDef.baseSceneName));
         }
 
         private void Run_onRunDestroyGlobal(Run obj)

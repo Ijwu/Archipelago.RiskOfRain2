@@ -86,11 +86,6 @@ namespace Archipelago.RiskOfRain2
             Log.LogDebug("Ok, finished browsing catalog.");
         }
 
-        private void PickupDropletController_CreatePickupDroplet_PickupIndex_Vector3_Vector3(On.RoR2.PickupDropletController.orig_CreatePickupDroplet_PickupIndex_Vector3_Vector3 orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
-        {
-            throw new NotImplementedException();
-        }
-
         private void Items_ItemReceived(MultiClient.Net.Helpers.ReceivedItemsHelper helper)
         {
             var newItem = helper.DequeueItem();
