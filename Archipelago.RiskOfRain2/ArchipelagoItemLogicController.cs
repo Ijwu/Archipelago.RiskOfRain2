@@ -46,7 +46,7 @@ namespace Archipelago.RiskOfRain2
         public ArchipelagoItemLogicController(ArchipelagoSession session)
         {
             this.session = session;
-            On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
+            On.RoR2.PickupDropletController.CreatePickupDroplet_PickupIndex_Vector3_Vector3 += PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update += RoR2Application_Update;
             session.Socket.PacketReceived += Session_PacketReceived;
             session.Items.ItemReceived += Items_ItemReceived;
@@ -86,6 +86,11 @@ namespace Archipelago.RiskOfRain2
             Log.LogDebug("Ok, finished browsing catalog.");
         }
 
+        private void PickupDropletController_CreatePickupDroplet_PickupIndex_Vector3_Vector3(On.RoR2.PickupDropletController.orig_CreatePickupDroplet_PickupIndex_Vector3_Vector3 orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
+        {
+            throw new NotImplementedException();
+        }
+
         private void Items_ItemReceived(MultiClient.Net.Helpers.ReceivedItemsHelper helper)
         {
             var newItem = helper.DequeueItem();
@@ -101,9 +106,9 @@ namespace Archipelago.RiskOfRain2
                         var connectedPacket = packet as ConnectedPacket;
                         // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
                         ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-                        TotalChecks = connectedPacket.LocationsChecked.Count + connectedPacket.MissingChecks.Count;
+                        TotalChecks = connectedPacket.LocationsChecked.Count() + connectedPacket.MissingChecks.Count();
                         
-                        CurrentChecks = connectedPacket.LocationsChecked.Count;
+                        CurrentChecks = connectedPacket.LocationsChecked.Count();
 
                         ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
                         ArchipelagoTotalChecksObjectiveController.TotalChecks = TotalChecks;
@@ -112,7 +117,7 @@ namespace Archipelago.RiskOfRain2
 
                         // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
                         // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
-                        PickedUpItemCount = connectedPacket.LocationsChecked.Count * ItemPickupStep;
+                        PickedUpItemCount = connectedPacket.LocationsChecked.Count() * ItemPickupStep;
                         break;
                     }
             }
@@ -126,7 +131,7 @@ namespace Archipelago.RiskOfRain2
 
         public void Dispose()
         {
-            On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
+            On.RoR2.PickupDropletController.CreatePickupDroplet_PickupIndex_Vector3_Vector3 -= PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update -= RoR2Application_Update;
 
             if (session != null)
@@ -250,7 +255,7 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
+        private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet_PickupIndex_Vector3_Vector3 orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
         {
             if (skippedItems.Contains(pickupIndex))
             {
@@ -306,7 +311,7 @@ namespace Archipelago.RiskOfRain2
                 Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");
 
                 var packet = new LocationChecksPacket();
-                packet.Locations = new List<int> { itemLocationId };
+                packet.Locations = new List<long> { itemLocationId }.ToArray();
 
                 session.Socket.SendPacket(packet);
                 return false;
