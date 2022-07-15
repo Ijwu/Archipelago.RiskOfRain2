@@ -97,6 +97,10 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
 
+**1.1.2**
+* SOTV Ending now counts as an acceptable ending.
+* Added YAML toggle for 'Death on the final stage counts as a win'.
+
 **1.1.1**
 * Update plugin version so it appears properly in the logs.
 

@@ -29,6 +29,8 @@ namespace Archipelago.RiskOfRain2
         public ArchipelagoLocationCheckProgressBarUI LocationCheckBar;
 
         private ArchipelagoSession session;
+        private bool finalStageDeath = true;
+
         public ArchipelagoClient()
         {
 
@@ -59,6 +61,8 @@ namespace Archipelago.RiskOfRain2
             }
 
             LoginSuccessful successResult = (LoginSuccessful)result;
+            successResult.SlotData.TryGetValue("FinalStageDeath", out object stageDeathObject);
+            if (stageDeathObject != null) finalStageDeath = (bool) stageDeathObject;
 
             LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
 
@@ -242,11 +246,8 @@ namespace Archipelago.RiskOfRain2
         }
         private void Run_BeginGameOver(On.RoR2.Run.orig_BeginGameOver orig, Run self, GameEndingDef gameEndingDef)
         {
-            var acceptableEndings = new[] { RoR2Content.GameEndings.MainEnding, RoR2Content.GameEndings.ObliterationEnding, RoR2Content.GameEndings.LimboEnding};
-            var isAcceptableEnding = (acceptableEndings.Contains(gameEndingDef)) || (gameEndingDef == RoR2Content.GameEndings.StandardLoss && Stage.instance.sceneDef.baseSceneName == "moon2");
-
-            // Are we in commencement or have we obliterated?
-            if (isAcceptableEnding)
+            // If ending is acceptable, finish the archipelago run.
+            if (IsEndingAcceptable(gameEndingDef))
             {
                 var packet = new StatusUpdatePacket();
                 packet.Status = ArchipelagoClientState.ClientGoal;
@@ -255,6 +256,27 @@ namespace Archipelago.RiskOfRain2
                 new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
             }
             orig(self, gameEndingDef);
+        }
+
+        private bool IsEndingAcceptable(GameEndingDef gameEndingDef)
+        {
+            // Acceptable ending types
+            var acceptableEndings = new[] { 
+                RoR2Content.GameEndings.MainEnding, 
+                RoR2Content.GameEndings.ObliterationEnding, 
+                RoR2Content.GameEndings.LimboEnding, 
+                DLC1Content.GameEndings.VoidEnding 
+            };
+
+            // Acceptable stages to die on
+            var acceptableLosses = new[]
+            {
+                "moon",
+                "moon2",
+                "voidraid"
+            };
+
+            return (acceptableEndings.Contains(gameEndingDef)) || ( finalStageDeath && gameEndingDef == RoR2Content.GameEndings.StandardLoss && acceptableLosses.Contains(Stage.instance.sceneDef.baseSceneName));
         }
 
         private void Run_onRunDestroyGlobal(Run obj)

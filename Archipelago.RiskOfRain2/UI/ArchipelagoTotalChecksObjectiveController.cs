@@ -12,12 +12,12 @@ namespace Archipelago.RiskOfRain2.UI
     {
         public class TotalChecksObjectiveTracker : ObjectiveTracker
         {
-            protected override string GenerateString()
+            public override string GenerateString()
             {
                 return $"Complete location checks: {CurrentChecks}/{TotalChecks}";
             }
 
-            protected override bool IsDirty()
+            public override bool IsDirty()
             {
                 return true;
             }
