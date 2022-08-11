@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Archipelago.RiskOfRain2.Net;
 using Archipelago.RiskOfRain2.UI;
@@ -47,7 +44,7 @@ namespace Archipelago.RiskOfRain2
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
 
-            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(2,0,0), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
+            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(3,4,0), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
 
             if (!result.Successful)
             {
@@ -61,8 +58,10 @@ namespace Archipelago.RiskOfRain2
             }
 
             LoginSuccessful successResult = (LoginSuccessful)result;
-            successResult.SlotData.TryGetValue("FinalStageDeath", out object stageDeathObject);
-            if (stageDeathObject != null) finalStageDeath = (bool) stageDeathObject;
+            if (successResult.SlotData.TryGetValue("FinalStageDeath", out var stageDeathObject))
+            {
+                finalStageDeath = Convert.ToBoolean(stageDeathObject);
+            }
 
             LocationCheckBar.ItemPickupStep = ItemLogic.ItemPickupStep;
 
