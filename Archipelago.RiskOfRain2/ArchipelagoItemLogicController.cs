@@ -14,6 +14,7 @@ using R2API.Networking.Interfaces;
 using RoR2;
 using RoR2.UI;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Archipelago.RiskOfRain2
 {
@@ -30,9 +31,6 @@ namespace Archipelago.RiskOfRain2
         private bool finishedAllChecks = false;
         private ArchipelagoSession session;
         private Queue<string> itemReceivedQueue = new Queue<string>();
-        private Dictionary<int, string> itemLookupById;
-        private Dictionary<int, string> locationLookupById;
-        private GameData riskOfRainData;
         private PickupIndex[] skippedItems;
 
         private GameObject smokescreenPrefab;
@@ -48,24 +46,25 @@ namespace Archipelago.RiskOfRain2
         public ArchipelagoItemLogicController(ArchipelagoSession session)
         {
             this.session = session;
-            On.RoR2.PickupDropletController.CreatePickupDroplet += PickupDropletController_CreatePickupDroplet;
+            On.RoR2.PickupDropletController.CreatePickupDroplet_PickupIndex_Vector3_Vector3 += PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update += RoR2Application_Update;
-            session.PacketReceived += Session_PacketReceived;
+            session.Socket.PacketReceived += Session_PacketReceived;
+            session.Items.ItemReceived += Items_ItemReceived;
 
-            smokescreenPrefab = Resources.Load<GameObject>("Prefabs/Effects/SmokescreenEffect").InstantiateClone("LocationCheckPoof", true);
+            Log.LogDebug("Okay finished hooking.");
+            smokescreenPrefab = Addressables.LoadAssetAsync<GameObject>("Assets/RoR2/Junk/Characters/Bandit/Skills/SmokescreenEffect.prefab").WaitForCompletion();
+            Log.LogDebug("Okay, finished geting prefab.");
 
             skippedItems = new PickupIndex[]
             {
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixBlue.equipmentIndex),
-                PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixEcho.equipmentIndex),
-                PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixGold.equipmentIndex),
+                //PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixEcho.equipmentIndex), // Causes NRE... Not sure why.
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixHaunted.equipmentIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixLunar.equipmentIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixPoison.equipmentIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixRed.equipmentIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixWhite.equipmentIndex),
-                PickupCatalog.FindPickupIndex(RoR2Content.Equipment.AffixYellow.equipmentIndex),
-                PickupCatalog.FindPickupIndex("LunarCoin.Coin0"),
+                PickupCatalog.FindPickupIndex(RoR2Content.MiscPickups.LunarCoin.miscPickupIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Items.ArtifactKey.itemIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.Bomb.artifactIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.Command.artifactIndex),
@@ -84,6 +83,13 @@ namespace Archipelago.RiskOfRain2
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.WeakAssKnees.artifactIndex),
                 PickupCatalog.FindPickupIndex(RoR2Content.Artifacts.WispOnDeath.artifactIndex),
             };
+            Log.LogDebug("Ok, finished browsing catalog.");
+        }
+
+        private void Items_ItemReceived(MultiClient.Net.Helpers.ReceivedItemsHelper helper)
+        {
+            var newItem = helper.DequeueItem();
+            EnqueueItem(newItem.Item);
         }
 
         private void Session_PacketReceived(ArchipelagoPacketBase packet)
@@ -95,9 +101,9 @@ namespace Archipelago.RiskOfRain2
                         var connectedPacket = packet as ConnectedPacket;
                         // Add 1 because the user's YAML will contain a value equal to "number of pickups before sent location"
                         ItemPickupStep = Convert.ToInt32(connectedPacket.SlotData["itemPickupStep"]) + 1;
-                        TotalChecks = connectedPacket.ItemsChecked.Count + connectedPacket.MissingChecks.Count;
+                        TotalChecks = connectedPacket.LocationsChecked.Count() + connectedPacket.MissingChecks.Count();
                         
-                        CurrentChecks = connectedPacket.ItemsChecked.Count;
+                        CurrentChecks = connectedPacket.LocationsChecked.Count();
 
                         ArchipelagoTotalChecksObjectiveController.CurrentChecks = CurrentChecks;
                         ArchipelagoTotalChecksObjectiveController.TotalChecks = TotalChecks;
@@ -106,34 +112,7 @@ namespace Archipelago.RiskOfRain2
 
                         // Add up pickedUpItemCount so that resuming a game is possible. The intended behavior is that you immediately receive
                         // all of the items you are granted. This is for restarting (in case you lose a run but are not in commencement). 
-                        PickedUpItemCount = connectedPacket.ItemsChecked.Count * ItemPickupStep;
-                        break;
-                    }
-                case ArchipelagoPacketType.DataPackage:
-                    {
-                        var dataPackagePacket = packet as DataPackagePacket;
-                        itemLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].ItemLookup.ToDictionary(x => x.Value, x => x.Key);
-                        locationLookupById = dataPackagePacket.DataPackage.Games["Risk of Rain 2"].LocationLookup.ToDictionary(x => x.Value, x => x.Key);
-
-                        riskOfRainData = dataPackagePacket.DataPackage.Games["Risk of Rain 2"];
-                        break;
-                    }
-                case ArchipelagoPacketType.ReceivedItems:
-                    {
-                        // Skip first ReceivedItems packet received after a disconnect->reconnect.
-                        // (Otherwise our items would get duped. That's OP, yo.)
-                        if (ArchipelagoClient.RecentlyReconnected)
-                        {
-                            ArchipelagoClient.RecentlyReconnected = false;
-                            break;
-                            
-                        }
-
-                        var p = packet as ReceivedItemsPacket;
-                        foreach (var newItem in p.Items)
-                        {
-                            EnqueueItem(newItem.Item);
-                        }
+                        PickedUpItemCount = connectedPacket.LocationsChecked.Count() * ItemPickupStep;
                         break;
                     }
             }
@@ -141,18 +120,18 @@ namespace Archipelago.RiskOfRain2
 
         public void EnqueueItem(int itemId)
         {
-            var item = itemLookupById[itemId];
+            var item = session.Items.GetItemName(itemId);
             itemReceivedQueue.Enqueue(item);
         }
 
         public void Dispose()
         {
-            On.RoR2.PickupDropletController.CreatePickupDroplet -= PickupDropletController_CreatePickupDroplet;
+            On.RoR2.PickupDropletController.CreatePickupDroplet_PickupIndex_Vector3_Vector3 -= PickupDropletController_CreatePickupDroplet;
             On.RoR2.RoR2Application.Update -= RoR2Application_Update;
 
             if (session != null)
             {
-                session.PacketReceived -= Session_PacketReceived;
+                session.Socket.PacketReceived -= Session_PacketReceived;
                 session = null;
             }
         }
@@ -190,7 +169,7 @@ namespace Archipelago.RiskOfRain2
                     GiveItemToPlayers(boss);
                     break;
                 case "Lunar Item":
-                    var lunar = Run.instance.availableLunarDropList.Choice();
+                    var lunar = Run.instance.availableLunarCombinedDropList.Choice();
                     var pickupDef = PickupCatalog.GetPickupDef(lunar);
                     if (pickupDef.itemIndex != ItemIndex.None)
                     {
@@ -265,17 +244,13 @@ namespace Archipelago.RiskOfRain2
 
         private void DisplayPickupNotification(PickupIndex index)
         {
-            // Dunno any better so hit every queue there is.
-            foreach (var queue in NotificationQueue.readOnlyInstancesList)
+            foreach (var player in PlayerCharacterMasterController.instances)
             {
-                foreach (var player in PlayerCharacterMasterController.instances)
-                {
-                    queue.OnPickup(player.master, index);
-                }
+                CharacterMasterNotificationQueue.PushPickupNotification(player.master, index);
             }
         }
 
-        private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
+        private void PickupDropletController_CreatePickupDroplet(On.RoR2.PickupDropletController.orig_CreatePickupDroplet_PickupIndex_Vector3_Vector3 orig, PickupIndex pickupIndex, Vector3 position, Vector3 velocity)
         {
             if (skippedItems.Contains(pickupIndex))
             {
@@ -327,13 +302,13 @@ namespace Archipelago.RiskOfRain2
                 }
 
                 var itemSendName = $"ItemPickup{CurrentChecks}";
-                var itemLocationId = riskOfRainData.LocationLookup[itemSendName];
+                var itemLocationId = session.Locations.GetLocationIdFromName("Risk of Rain 2", itemSendName);
                 Log.LogDebug($"Sent out location {itemSendName} (id: {itemLocationId})");
 
                 var packet = new LocationChecksPacket();
-                packet.Locations = new List<int> { itemLocationId };
+                packet.Locations = new List<long> { itemLocationId }.ToArray();
 
-                session.SendPacket(packet);
+                session.Socket.SendPacket(packet);
                 return false;
             }
             return true;

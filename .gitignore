@@ -206,9 +206,6 @@ PublishScripts/
 *.nuget.props
 *.nuget.targets
 
-# Nuget personal access tokens and Credentials
-nuget.config
-
 # Microsoft Azure Build Output
 csx/
 *.build.csdef
@@ -387,4 +384,4 @@ FodyWeavers.xsd
 .idea/
 *.sln.iml
 
-DLLs/**
+Archipelago.RiskOfRain2/DLLs/**

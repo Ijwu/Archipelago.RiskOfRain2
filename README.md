@@ -2,7 +2,7 @@
 
 This mod adds support to Risk of Rain 2 for playing as an Archipelago client. For more information on Archipelago head over to https://archipelago.gg or join our Discord.
 
-Should be multiplayer compatible, but not rigorously tested. Be sure to scale up your YAML settings if you play in multiplayer. All players require the mod in multiplayer.
+Should be multiplayer compatible. Be sure to scale up your YAML settings if you play in multiplayer. All players require the mod in multiplayer.
 
 ## Gameplay 
 
@@ -96,6 +96,22 @@ Simply check `Enable Archipelago?` and when you start the run it will automatica
 
 ## Changelog
 Internal versions are unreleased versions of the mod. They are pointed out in the changelog so that I can sort my work and to allow others to follow my progress between releases.
+
+**1.1.3**
+* Fixed connection issues.
+* Update client protocol version. 
+    * Now only works on Archipelago server version 0.3.4 or higher.
+
+**1.1.2**
+* SOTV Ending now counts as an acceptable ending.
+* Added YAML toggle for 'Death on the final stage counts as a win'.
+
+**1.1.1**
+* Update plugin version so it appears properly in the logs.
+
+**1.1.0**
+* Update to support Survivors of the Void DLC and updated R2API.
+* Fix Archipelago PrintJSON packets.
 
 **1.0.2**
 
