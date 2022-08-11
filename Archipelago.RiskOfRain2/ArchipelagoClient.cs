@@ -275,7 +275,11 @@ namespace Archipelago.RiskOfRain2
                 "voidraid"
             };
 
-            return (acceptableEndings.Contains(gameEndingDef)) || ( finalStageDeath && gameEndingDef == RoR2Content.GameEndings.StandardLoss && acceptableLosses.Contains(Stage.instance.sceneDef.baseSceneName));
+            return acceptableEndings.Contains(gameEndingDef) 
+                  ||(finalStageDeath 
+                     && gameEndingDef == RoR2Content.GameEndings.StandardLoss 
+                     && acceptableLosses.Contains(Stage.instance.sceneDef.baseSceneName)
+                    );
         }
 
         private void Run_onRunDestroyGlobal(Run obj)
