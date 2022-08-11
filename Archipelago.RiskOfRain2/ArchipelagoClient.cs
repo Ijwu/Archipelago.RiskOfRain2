@@ -44,7 +44,7 @@ namespace Archipelago.RiskOfRain2
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
 
-            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(3,4,0), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
+            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0,3,4), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
 
             if (!result.Successful)
             {
