@@ -26,11 +26,11 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "1.1.3";
+        public const string PluginVersion = "1.1.4";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
-        private string apServerUri = "localhost";
+        private string apServerUri = "archipelago.gg";
         private int apServerPort = 38281;
         private bool willConnectToAP = true;
         private bool isPlayingAP = false;
