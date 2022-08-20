@@ -17,7 +17,7 @@ namespace Archipelago.RiskOfRain2
     //TODO: perhaps only use particular drops as fodder for item pickups (i.e. only chest drops/interactable drops) then set options based on them maybe
     public class ArchipelagoClient : IDisposable
     {
-        public delegate void ClientDisconnected(ushort code, string reason, bool wasClean);
+        public delegate void ClientDisconnected(string reason);
         public event ClientDisconnected OnClientDisconnect;
 
         public Uri LastServerUrl { get; set; }
@@ -44,7 +44,7 @@ namespace Archipelago.RiskOfRain2
             ItemLogic = new ArchipelagoItemLogicController(session);
             LocationCheckBar = new ArchipelagoLocationCheckProgressBarUI();
 
-            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, new Version(0,3,4), itemsHandlingFlags: ItemsHandlingFlags.AllItems);
+            var result = session.TryConnectAndLogin("Risk of Rain 2", slotName, ItemsHandlingFlags.AllItems, new Version(0, 3, 4));
 
             if (!result.Successful)
             {
@@ -156,14 +156,14 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        private void Session_SocketClosed(WebSocketSharp.CloseEventArgs e)
+        private void Session_SocketClosed(string reason)
         {
             Dispose();
             new ArchipelagoEndMessage().Send(NetworkDestination.Clients);
 
             if (OnClientDisconnect != null)
             {
-                OnClientDisconnect(e.Code, e.Reason, e.WasClean);
+                OnClientDisconnect(reason);
             }
         }
 

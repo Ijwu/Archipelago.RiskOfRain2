@@ -106,12 +106,12 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
+        private void AP_OnClientDisconnect(string reason)
         {
-            Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
-            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
+            Log.LogWarning($"Archipelago client was disconnected from the server because `{reason}`");
+            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", Color.red);
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
+            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer))
             {
                 //StartCoroutine(AP.AttemptConnection());
             }
