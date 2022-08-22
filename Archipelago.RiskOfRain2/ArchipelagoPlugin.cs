@@ -26,11 +26,11 @@ namespace Archipelago.RiskOfRain2
         public const string PluginGUID = "com.Ijwu.Archipelago";
         public const string PluginAuthor = "Ijwu";
         public const string PluginName = "Archipelago";
-        public const string PluginVersion = "1.1.3";
+        public const string PluginVersion = "1.1.4";
 
         private ArchipelagoClient AP;
         private bool isInLobbyConfigLoaded = false;
-        private string apServerUri = "localhost";
+        private string apServerUri = "archipelago.gg";
         private int apServerPort = 38281;
         private bool willConnectToAP = true;
         private bool isPlayingAP = false;
@@ -106,12 +106,12 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        private void AP_OnClientDisconnect(ushort code, string reason, bool wasClean)
+        private void AP_OnClientDisconnect(string reason)
         {
-            Log.LogWarning($"Archipelago client was disconnected from the server{(wasClean ? " in a dirty manner" : "")}: ({code}) {reason}");
-            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", wasClean ? Color.white : Color.red);
+            Log.LogWarning($"Archipelago client was disconnected from the server because `{reason}`");
+            ChatMessage.SendColored($"Archipelago client was disconnected from the server.", Color.red);
             var isHost = NetworkServer.active && RoR2Application.isInMultiPlayer;
-            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer) && !wasClean)
+            if (isPlayingAP && (isHost || RoR2Application.isInSinglePlayer))
             {
                 //StartCoroutine(AP.AttemptConnection());
             }

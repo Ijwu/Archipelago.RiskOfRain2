@@ -118,7 +118,7 @@ namespace Archipelago.RiskOfRain2
             }
         }
 
-        public void EnqueueItem(int itemId)
+        public void EnqueueItem(long itemId)
         {
             var item = session.Items.GetItemName(itemId);
             itemReceivedQueue.Enqueue(item);
